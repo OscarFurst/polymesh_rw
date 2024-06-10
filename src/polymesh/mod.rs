@@ -19,9 +19,13 @@ pub struct FileContent<T: FileParser> {
 }
 impl<T: FileParser> FileContent<T> {
     /// Write the file to the given case directory.
-    // TODO: Do I want to enforse the case directory structure, or provide more flexibility?
-    fn write(&self, path: &path::Path) {
-        //
+    fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
+        let mut file = std::fs::File::create(path.join(self.data.file_path()))?;
+        if let Some(meta) = &self.meta {
+            meta.write_meta(&mut file)?;
+        }
+        self.data.write_data(&mut file)?;
+        Ok(())
     }
 }
 

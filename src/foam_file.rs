@@ -7,12 +7,22 @@ use nom::{
     sequence::delimited,
     IResult,
 };
+use std::io::prelude::*;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum FoamFileFormat {
     ascii,
     binary,
+}
+
+impl std::fmt::Display for FoamFileFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            FoamFileFormat::ascii => write!(f, "ascii"),
+            FoamFileFormat::binary => write!(f, "binary"),
+        }
+    }
 }
 
 fn parse_format(input: &str) -> IResult<&str, FoamFileFormat> {
@@ -66,6 +76,23 @@ impl FoamFileData {
     pub fn parse_optional(input: &str) -> IResult<&str, Option<FoamFileData>> {
         let (input, file_data) = opt(FoamFileData::parse)(input)?;
         Ok((input, file_data))
+    }
+
+    pub fn write_meta(&self, file: &mut std::fs::File) -> Result<(), Box<dyn std::error::Error>> {
+        writeln!(file, "FoamFile")?;
+        writeln!(file, "{{")?;
+        if let Some(version) = &self.version {
+            writeln!(file, "    version     {};", version)?;
+        }
+        writeln!(file, "    format      {};", self.format)?;
+        writeln!(file, "    class       {};", self.class)?;
+        if let Some(note) = &self.note {
+            writeln!(file, "    note        {};", note)?;
+        }
+        writeln!(file, "    location    {};", self.location)?;
+        writeln!(file, "    object      {};", self.object)?;
+        writeln!(file, "}}")?;
+        Ok(())
     }
 }
 
