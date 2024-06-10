@@ -1,4 +1,5 @@
 use crate::foam_file::FoamFileData;
+use crate::polymesh::FileContent;
 use nom::IResult;
 use std::path;
 
@@ -6,30 +7,30 @@ use std::path;
 /// The trait takes care of the file header so that only the data parsing needs to be implemented.
 pub trait FileParser: Sized + PartialEq {
     /// Parse the file at the given path.
-    fn parse(path: &path::Path) -> Result<(Option<FoamFileData>, Self), String> {
+    fn parse(path: &path::Path) -> Result<FileContent<Self>, String> {
         // load file
         let input = std::fs::read_to_string(path)
             .expect(format!("Failed to read file {:?}.", path).as_str());
         // parse
         match parse_all(&input) {
-            Ok((_, data)) => Ok(data),
+            Ok((_, (meta, data))) => Ok(FileContent { meta, data }),
             Err(e) => Err(format!("Failed to parse file {:?}: {}", path, e)),
         }
     }
 
     /// Parse the file at the given path and check if the file was read until the end.
-    fn parse_and_check(path: &str) -> Result<(Option<FoamFileData>, Self), String> {
+    fn parse_and_check(path: &str) -> Result<FileContent<Self>, String> {
         // load file
         let input = std::fs::read_to_string(path).expect("Failed to read file.");
         // parse
         match parse_all(&input) {
-            Ok(("", data)) => Ok(data),
-            Ok((rest, data)) => {
+            Ok(("", (meta, data))) => Ok(FileContent { meta, data }),
+            Ok((rest, (meta, data))) => {
                 eprintln!(
                     "Warning: Parsing did not consume all input. Remaining: {}",
                     rest
                 );
-                Ok(data)
+                Ok(FileContent { meta, data })
             }
             Err(e) => Err(format!("Failed to parse file {:?}: {}", path, e)),
         }

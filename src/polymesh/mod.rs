@@ -13,15 +13,20 @@ pub mod points;
 pub mod pointzones;
 pub mod sets;
 
+pub struct FileContent<T: FileParser> {
+    pub meta: Option<FoamFileData>,
+    pub data: T,
+}
+
 pub struct PolyMesh {
-    pub points: (Option<FoamFileData>, points::PointData),
-    pub faces: (Option<FoamFileData>, faces::FaceData),
-    pub owner: (Option<FoamFileData>, owner::OwnerData),
-    pub neighbour: (Option<FoamFileData>, neighbour::NeighbourData),
-    pub boundary: (Option<FoamFileData>, boundary::BoundaryData),
-    pub facezones: (Option<FoamFileData>, facezones::FaceZoneData),
-    pub cellzones: (Option<FoamFileData>, cellzones::CellZoneData),
-    pub pointzones: (Option<FoamFileData>, pointzones::PointZoneData),
+    pub points: FileContent<points::PointData>,
+    pub faces: FileContent<faces::FaceData>,
+    pub owner: FileContent<owner::OwnerData>,
+    pub neighbour: FileContent<neighbour::NeighbourData>,
+    pub boundary: FileContent<boundary::BoundaryData>,
+    pub facezones: FileContent<facezones::FaceZoneData>,
+    pub cellzones: FileContent<cellzones::CellZoneData>,
+    pub pointzones: FileContent<pointzones::PointZoneData>,
     pub sets: sets::Sets,
 }
 

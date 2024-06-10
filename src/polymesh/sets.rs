@@ -1,6 +1,6 @@
+use super::FileContent;
 use crate::base::single_i_data;
 use crate::file_parser::FileParser;
-use crate::foam_file::FoamFileData;
 use nom::IResult;
 use std::collections::HashMap;
 use std::fs;
@@ -8,7 +8,7 @@ use std::path;
 
 pub struct Sets {
     pub n: usize,
-    pub sets: HashMap<String, (Option<FoamFileData>, Set)>,
+    pub sets: HashMap<String, FileContent<Set>>,
 }
 
 impl Sets {
