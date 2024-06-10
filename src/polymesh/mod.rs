@@ -13,6 +13,7 @@ pub mod points;
 pub mod pointzones;
 pub mod sets;
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct FileContent<T: FileParser> {
     pub meta: Option<FoamFileData>,
     pub data: T,
@@ -20,7 +21,11 @@ pub struct FileContent<T: FileParser> {
 impl<T: FileParser> FileContent<T> {
     /// Write the file to the given case directory.
     fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
-        let mut file = std::fs::File::create(path.join(self.data.file_path()))?;
+        let full_path = path.join(self.data.file_path());
+        if let Some(p) = full_path.parent() {
+            std::fs::create_dir_all(p)?;
+        }
+        let mut file = std::fs::File::create(full_path)?;
         if let Some(meta) = &self.meta {
             meta.write_meta(&mut file)?;
         }
@@ -29,6 +34,7 @@ impl<T: FileParser> FileContent<T> {
     }
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct PolyMesh {
     pub points: FileContent<points::PointData>,
     pub faces: FileContent<faces::FaceData>,
@@ -86,5 +92,18 @@ impl PolyMesh {
             pointzones,
             sets,
         }
+    }
+
+    pub fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
+        self.points.write(path)?;
+        self.faces.write(path)?;
+        self.owner.write(path)?;
+        self.neighbour.write(path)?;
+        self.boundary.write(path)?;
+        self.facezones.write(path)?;
+        self.cellzones.write(path)?;
+        self.pointzones.write(path)?;
+        self.sets.write(path)?;
+        Ok(())
     }
 }

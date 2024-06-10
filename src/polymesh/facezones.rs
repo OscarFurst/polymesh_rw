@@ -4,14 +4,17 @@ use crate::writer_base::{bool_as_num, write_single_data};
 use nom::{
     bytes::complete::tag, character::complete::char, multi::count, sequence::delimited, IResult,
 };
+use std::collections::HashMap;
 use std::io::prelude::*;
 
+/// Container for the polyMesh faceZones data.
 #[derive(Debug, PartialEq, Clone)]
 pub struct FaceZoneData {
     pub n: usize,
-    pub facezones: Vec<FaceZone>,
+    pub facezones: HashMap<String, FaceZone>,
 }
 
+/// Container for the data of a single faceZone.
 #[derive(Debug, PartialEq, Clone)]
 pub struct FaceZone {
     // starts with a "type" which I have only seen as "faceZone", so I'm not storing it for now
@@ -31,6 +34,7 @@ impl FaceZone {
         writeln!(file, "faceLabels      List<label>  ")?;
         write_single_data(&self.faces, file)?;
         writeln!(file, ";")?;
+        self.write_flipmap(file)?;
         writeln!(file, "}}\n")?;
         Ok(())
     }
@@ -93,7 +97,11 @@ impl FileParser for FaceZoneData {
         // opening parenthesis
         let (input, _) = next(char('('))(input)?;
         // parse face zones
-        let (input, facezones) = count(parse_face_zone, n)(input)?;
+        let (input, facezone_vector) = count(parse_face_zone, n)(input)?;
+        let facezones = facezone_vector
+            .into_iter()
+            .map(|facezone| (facezone.name.clone(), facezone))
+            .collect();
         // closing parenthesis
         let (input, _) = next(char(')'))(input)?;
         Ok((input, FaceZoneData { n, facezones }))
@@ -106,7 +114,7 @@ impl FileParser for FaceZoneData {
     fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
         writeln!(file, "{}", self.n)?;
         writeln!(file, "(")?;
-        for facezone in &self.facezones {
+        for (_, facezone) in &self.facezones {
             facezone.write_data(file)?;
         }
         writeln!(file, ")")?;

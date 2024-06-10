@@ -24,10 +24,16 @@ pub fn write_multi_data<T: std::fmt::Display>(
     writeln!(file, "{}", data.len())?;
     writeln!(file, "(")?;
     for d in data {
-        writeln!(file, "{}", d.len())?;
-        writeln!(file, "(")?;
+        write!(file, "{}", d.len())?;
+        write!(file, "(")?;
+        let mut first = true;
         for dd in d {
-            writeln!(file, "{}", dd)?;
+            if first {
+                first = false;
+            } else {
+                write!(file, " ")?;
+            }
+            write!(file, "{}", dd)?;
         }
         writeln!(file, ")")?;
     }
@@ -46,7 +52,13 @@ where
     writeln!(file, "(")?;
     for d in data {
         write!(file, "(")?;
+        let mut first = true;
         for dd in d {
+            if first {
+                first = false;
+            } else {
+                write!(file, " ")?;
+            }
             write!(file, "{}", dd)?;
         }
         writeln!(file, ")")?;

@@ -1,0 +1,74 @@
+FoamFile
+{
+    format      ascii;
+    class       polyBoundaryMesh;
+    location    "constant/polyMesh";
+    object      boundary;
+}
+8
+(
+outlet
+{
+    type patch;
+    physicalType patch;
+    nFaces 4;
+    startFace 984;
+}
+
+metal_out
+{
+    type patch;
+    physicalType patch;
+    nFaces 20;
+    startFace 1312;
+}
+
+inlet
+{
+    type patch;
+    physicalType patch;
+    nFaces 4;
+    startFace 980;
+}
+
+bottom
+{
+    type patch;
+    physicalType patch;
+    nFaces 36;
+    startFace 1352;
+}
+
+sides
+{
+    type patch;
+    physicalType patch;
+    nFaces 288;
+    startFace 1024;
+}
+
+top
+{
+    type patch;
+    physicalType patch;
+    nFaces 36;
+    startFace 988;
+}
+
+interface
+{
+    type patch;
+    physicalType patch;
+    nFaces 0;
+    startFace 988;
+}
+
+metal_in
+{
+    type patch;
+    physicalType patch;
+    nFaces 20;
+    startFace 1332;
+}
+
+)

@@ -87,9 +87,9 @@ impl FoamFileData {
         writeln!(file, "    format      {};", self.format)?;
         writeln!(file, "    class       {};", self.class)?;
         if let Some(note) = &self.note {
-            writeln!(file, "    note        {};", note)?;
+            writeln!(file, "    note        \"{}\";", note)?;
         }
-        writeln!(file, "    location    {};", self.location)?;
+        writeln!(file, "    location    \"{}\";", self.location)?;
         writeln!(file, "    object      {};", self.object)?;
         writeln!(file, "}}")?;
         Ok(())

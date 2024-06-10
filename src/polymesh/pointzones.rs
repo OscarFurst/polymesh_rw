@@ -2,12 +2,13 @@ use crate::file_parser::FileParser;
 use crate::parser_base::*;
 use crate::writer_base::write_single_data;
 use nom::{character::complete::char, multi::count, IResult};
+use std::collections::HashMap;
 use std::io::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct PointZoneData {
     pub n: usize,
-    pub pointzones: Vec<PointZone>,
+    pub pointzones: HashMap<String, PointZone>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -66,7 +67,11 @@ impl FileParser for PointZoneData {
         // opening parenthesis
         let (input, _) = next(char('('))(input)?;
         // parse point zones
-        let (input, pointzones) = count(parse_point_zone, n)(input)?;
+        let (input, pointzone_vector) = count(parse_point_zone, n)(input)?;
+        let pointzones = pointzone_vector
+            .into_iter()
+            .map(|pointzone| (pointzone.name.clone(), pointzone))
+            .collect();
         // closing parenthesis
         let (input, _) = next(char(')'))(input)?;
         Ok((input, PointZoneData { n, pointzones }))
@@ -79,7 +84,7 @@ impl FileParser for PointZoneData {
     fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
         writeln!(file, "{}", self.n)?;
         writeln!(file, "(")?;
-        for facezone in &self.pointzones {
+        for (_, facezone) in &self.pointzones {
             facezone.write_data(file)?;
         }
         writeln!(file, ")")?;
