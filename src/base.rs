@@ -2,8 +2,7 @@ use nom::{
     branch::alt,
     bytes::complete::{is_not, tag, take_until, take_while},
     character::complete::{char, digit1, multispace0, multispace1},
-    combinator::{map, map_res, opt, value},
-    error::ParseError,
+    combinator::{map, map_res, value},
     multi::{count, many0},
     sequence::{delimited, pair, preceded, terminated, tuple},
     IResult,
@@ -51,9 +50,9 @@ where
 /// Parsers
 
 /// A parser that consumes a word, either contained in quotes, or a contiguous word
-/// potentially containing /, \ and _. Returns a `&str`.
+/// potentially containing /, \, . and _. Returns a `&str`.
 pub fn string_val(input: &str) -> IResult<&str, String> {
-    let allowed_chars = r#"/\_"#;
+    let allowed_chars = r#"/\_."#;
     map(
         alt((
             delimited(char('"'), is_not(r#"""#), char('"')),
@@ -163,6 +162,7 @@ pub fn discard_garbage(input: &str) -> IResult<&str, ()> {
     )(input)
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 

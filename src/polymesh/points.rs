@@ -36,6 +36,7 @@ impl FileParser for PointData {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
     #[test]

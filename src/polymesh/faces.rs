@@ -36,17 +36,19 @@ impl FileParser for FaceData {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn test_parse_points() {
+    fn test_parse_faces() {
         let input = "
-1388
+4
 (
 3(42 92 84)
 3(113 84 92)
 3(42 84 113)
-3(42 113 92)";
+3(42 113 92)
+)";
         let expected_value = FaceData {
             n: 4,
             faces: vec![

@@ -1,11 +1,7 @@
 use crate::base::*;
 use crate::file_parser::FileParser;
 use nom::{
-    bytes::complete::tag,
-    character::complete::char,
-    multi::count,
-    sequence::{delimited, preceded},
-    IResult,
+    bytes::complete::tag, character::complete::char, multi::count, sequence::delimited, IResult,
 };
 
 #[derive(Debug, PartialEq, Clone)]

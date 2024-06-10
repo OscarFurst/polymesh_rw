@@ -53,4 +53,27 @@ impl PolyMesh {
             sets,
         })
     }
+
+    pub fn parse_and_assert(dir_path: &path::Path) -> PolyMesh {
+        let points = points::PointData::parse_and_assert(&dir_path.join("points"));
+        let faces = faces::FaceData::parse_and_assert(&dir_path.join("faces"));
+        let owner = owner::OwnerData::parse_and_assert(&dir_path.join("owner"));
+        let neighbour = neighbour::NeighbourData::parse_and_assert(&dir_path.join("neighbour"));
+        let boundary = boundary::BoundaryData::parse_and_assert(&dir_path.join("boundary"));
+        let facezones = facezones::FaceZoneData::parse_and_assert(&dir_path.join("faceZones"));
+        let cellzones = cellzones::CellZoneData::parse_and_assert(&dir_path.join("cellZones"));
+        let pointzones = pointzones::PointZoneData::parse_and_assert(&dir_path.join("pointZones"));
+        let sets = sets::Sets::parse(&dir_path.join("sets"));
+        PolyMesh {
+            points,
+            faces,
+            owner,
+            neighbour,
+            boundary,
+            facezones,
+            cellzones,
+            pointzones,
+            sets,
+        }
+    }
 }
