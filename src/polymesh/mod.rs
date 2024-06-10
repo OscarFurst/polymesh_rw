@@ -17,6 +17,13 @@ pub struct FileContent<T: FileParser> {
     pub meta: Option<FoamFileData>,
     pub data: T,
 }
+impl<T: FileParser> FileContent<T> {
+    /// Write the file to the given case directory.
+    // TODO: Do I want to enforse the case directory structure, or provide more flexibility?
+    fn write(&self, path: &path::Path) {
+        //
+    }
+}
 
 pub struct PolyMesh {
     pub points: FileContent<points::PointData>,

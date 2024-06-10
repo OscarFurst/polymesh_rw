@@ -1,5 +1,5 @@
-use crate::base::*;
 use crate::file_parser::FileParser;
+use crate::parser_base::*;
 use nom::{
     bytes::complete::tag, character::complete::char, multi::count, sequence::delimited, IResult,
 };

@@ -1,5 +1,5 @@
-use crate::base::single_i_data;
 use crate::file_parser::FileParser;
+use crate::parser_base::single_i_data;
 use nom::IResult;
 
 #[derive(Debug, PartialEq, Clone)]

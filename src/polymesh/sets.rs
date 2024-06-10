@@ -1,6 +1,6 @@
 use super::FileContent;
-use crate::base::single_i_data;
 use crate::file_parser::FileParser;
+use crate::parser_base::single_i_data;
 use nom::IResult;
 use std::collections::HashMap;
 use std::fs;

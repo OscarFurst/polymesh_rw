@@ -1,5 +1,5 @@
-use crate::base::discard_garbage;
 use crate::foam_file::FoamFileData;
+use crate::parser_base::discard_garbage;
 use crate::polymesh::FileContent;
 use nom::IResult;
 use std::path;
@@ -56,6 +56,13 @@ pub trait FileParser: Sized + PartialEq {
 
     /// Parse the data part of the file.
     fn parse_data(input: &str) -> IResult<&str, Self>;
+
+    /// Write the data part of the file.
+    /// path: The path to the the case directory.
+    fn write_data(&self, path: &path::Path) -> Result<(), String>;
+
+    /// Provides the relative position of the data file in the case directory.
+    fn file_path() -> path::PathBuf;
 }
 
 /// Combine the parsing of the file header and the data.

@@ -1,5 +1,5 @@
-use crate::base::*;
 use crate::file_parser::FileParser;
+use crate::parser_base::*;
 use nom::{character::complete::char, multi::count, IResult};
 use std::collections::HashMap;
 
