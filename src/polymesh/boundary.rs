@@ -22,13 +22,13 @@ pub struct Boundary {
 
 impl fmt::Display for Boundary {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "{}", self.name)?;
-        writeln!(f, "{{")?;
-        writeln!(f, "    type {};", self.boundary_type)?;
-        writeln!(f, "    physicalType {};", self.physical_type)?;
-        writeln!(f, "    nFaces {};", self.n_faces)?;
-        writeln!(f, "    startFace {};", self.start_face)?;
-        writeln!(f, "}}")?;
+        writeln!(f, "    {}", self.name)?;
+        writeln!(f, "    {{")?;
+        writeln!(f, "        type            {};", self.boundary_type)?;
+        writeln!(f, "        physicalType    {};", self.physical_type)?;
+        writeln!(f, "        nFaces          {};", self.n_faces)?;
+        writeln!(f, "        startFace       {};", self.start_face)?;
+        writeln!(f, "    }}")?;
         Ok(())
     }
 }

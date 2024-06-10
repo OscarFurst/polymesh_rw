@@ -9,60 +9,60 @@ FoamFile
 
 8
 (
-inlet
-{
-    type patch;
-    physicalType patch;
-    nFaces 4;
-    startFace 980;
-}
-outlet
-{
-    type patch;
-    physicalType patch;
-    nFaces 4;
-    startFace 984;
-}
-interface
-{
-    type patch;
-    physicalType patch;
-    nFaces 0;
-    startFace 988;
-}
-top
-{
-    type patch;
-    physicalType patch;
-    nFaces 36;
-    startFace 988;
-}
-sides
-{
-    type patch;
-    physicalType patch;
-    nFaces 288;
-    startFace 1024;
-}
-metal_out
-{
-    type patch;
-    physicalType patch;
-    nFaces 20;
-    startFace 1312;
-}
-metal_in
-{
-    type patch;
-    physicalType patch;
-    nFaces 20;
-    startFace 1332;
-}
-bottom
-{
-    type patch;
-    physicalType patch;
-    nFaces 36;
-    startFace 1352;
-}
+    inlet
+    {
+        type            patch;
+        physicalType    patch;
+        nFaces          4;
+        startFace       980;
+    }
+    outlet
+    {
+        type            patch;
+        physicalType    patch;
+        nFaces          4;
+        startFace       984;
+    }
+    interface
+    {
+        type            patch;
+        physicalType    patch;
+        nFaces          0;
+        startFace       988;
+    }
+    top
+    {
+        type            patch;
+        physicalType    patch;
+        nFaces          36;
+        startFace       988;
+    }
+    sides
+    {
+        type            patch;
+        physicalType    patch;
+        nFaces          288;
+        startFace       1024;
+    }
+    metal_out
+    {
+        type            patch;
+        physicalType    patch;
+        nFaces          20;
+        startFace       1312;
+    }
+    metal_in
+    {
+        type            patch;
+        physicalType    patch;
+        nFaces          20;
+        startFace       1332;
+    }
+    bottom
+    {
+        type            patch;
+        physicalType    patch;
+        nFaces          36;
+        startFace       1352;
+    }
 )
