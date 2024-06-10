@@ -24,50 +24,13 @@ fn parse_file_format(input: &str) -> IResult<&str, FoamFileFormat> {
     delimited(ws(tag("format")), ws(parse_format), semicolon)(input)
 }
 
-#[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum FoamFileClass {
-    scalarField,
-    vectorField,
-}
-
-fn parse_class(input: &str) -> IResult<&str, FoamFileClass> {
-    let parse_scalar_field = value(FoamFileClass::scalarField, tag("scalarField"));
-    let parse_vector_field = value(FoamFileClass::vectorField, tag("vectorField"));
-    alt((parse_scalar_field, parse_vector_field))(input)
-}
-
-fn parse_file_class(input: &str) -> IResult<&str, FoamFileClass> {
-    delimited(ws(tag("class")), ws(parse_class), semicolon)(input)
-}
-
-fn parse_location(input: &str) -> IResult<&str, &str> {
-    delimited(ws(tag("location")), ws(key), semicolon)(input)
-}
-
-#[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum FoamFileObject {
-    points,
-    faces,
-}
-
-fn parse_object(input: &str) -> IResult<&str, FoamFileObject> {
-    let parse_points = value(FoamFileObject::points, tag("points"));
-    let parse_faces = value(FoamFileObject::faces, tag("faces"));
-    alt((parse_points, parse_faces))(input)
-}
-
-fn parse_file_object(input: &str) -> IResult<&str, FoamFileObject> {
-    delimited(ws(tag("object")), ws(parse_object), semicolon)(input)
-}
-
 #[derive(Debug, PartialEq, Clone)]
 pub struct FoamFileData {
     format: FoamFileFormat,
-    class: FoamFileClass,
+    class: String,
+    note: Option<String>,
     location: String,
-    object: FoamFileObject,
+    object: String,
 }
 
 impl FoamFileData {
@@ -78,9 +41,10 @@ impl FoamFileData {
         let (input, _) = next(tag("{"))(input)?;
         // Parse the contents
         let (input, format) = next(parse_file_format)(input)?;
-        let (input, class) = next(parse_file_class)(input)?;
-        let (input, location) = next(parse_location)(input)?;
-        let (input, object) = next(parse_file_object)(input)?;
+        let (input, class) = next(key_string_semicolon("class"))(input)?;
+        let (input, note) = opt(next(key_string_semicolon("note")))(input)?;
+        let (input, location) = next(key_string_semicolon("location"))(input)?;
+        let (input, object) = next(key_string_semicolon("object"))(input)?;
         // Consume the footer
         let (input, _) = next(tag("}"))(input)?;
         Ok((
@@ -88,7 +52,8 @@ impl FoamFileData {
             FoamFileData {
                 format,
                 class,
-                location: location.to_string(),
+                note,
+                location,
                 object,
             },
         ))
@@ -100,11 +65,12 @@ impl FoamFileData {
     }
 }
 mod tests {
-    use crate::foam_file::*;
+    use super::*;
 
     #[test]
     fn test_parse_foamfile() {
-        let input = r#"FoamFile
+        let input = r#"
+FoamFile
 {
     format      ascii;
     class       vectorField;
@@ -113,9 +79,40 @@ mod tests {
 }"#;
         let expected_data = FoamFileData {
             format: FoamFileFormat::ascii,
-            class: FoamFileClass::vectorField,
+            class: "vectorField".to_string(),
+            note: None,
             location: "constant/polyMesh".to_string(),
-            object: FoamFileObject::points,
+            object: "points".to_string(),
+        };
+
+        let expected = Ok(("", expected_data));
+        let actual = FoamFileData::parse(input);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_parse_stuff() {
+        let input = r#"/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  10
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       labelList;
+    note        "nPoints:215  nCells:592  nFaces:1388  nInternalFaces:980";
+    location    "constant/polyMesh";
+    object      owner;
+}"#;
+        let expected_data = FoamFileData {
+            format: FoamFileFormat::ascii,
+            class: "labelList".to_string(),
+            note: Some(r#"nPoints:215  nCells:592  nFaces:1388  nInternalFaces:980"#.to_string()),
+            location: r#"constant/polyMesh"#.to_string(),
+            object: "owner".to_string(),
         };
 
         let expected = Ok(("", expected_data));

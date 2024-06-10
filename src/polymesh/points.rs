@@ -9,8 +9,8 @@ type Point = [f64; 3];
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct PointData {
-    n: usize,
-    points: Vec<Point>,
+    pub n: usize,
+    pub points: Vec<Point>,
 }
 
 fn point_coordinates(input: &str) -> IResult<&str, Point> {

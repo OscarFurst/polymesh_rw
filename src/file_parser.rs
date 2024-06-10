@@ -1,24 +1,47 @@
 use crate::foam_file::FoamFileData;
 use nom::IResult;
+use std::path;
 
 /// A trait for parsing OpenFOAM files.
 /// The trait takes care of the file header so that only the data parsing needs to be implemented.
 pub trait FileParser: Sized + PartialEq {
-    fn parse(path: &str) -> Result<(Option<FoamFileData>, Self), &'static str> {
+    /// Parse the file at the given path.
+    fn parse(path: &path::Path) -> Result<(Option<FoamFileData>, Self), String> {
         // load file
-        let input = std::fs::read_to_string(path).expect("Failed to read file.");
+        let input = std::fs::read_to_string(path)
+            .expect(format!("Failed to read file {:?}.", path).as_str());
         // parse
-        match Self::parse_all(&input) {
-            Ok(("", data)) => Ok(data),
-            _ => Err("Failed to parse data"),
+        match parse_all(&input) {
+            Ok((_, data)) => Ok(data),
+            Err(e) => Err(format!("Failed to parse file {:?}: {}", path, e)),
         }
     }
 
-    fn parse_all(input: &str) -> IResult<&str, (Option<FoamFileData>, Self)> {
-        let (input, file_data) = FoamFileData::parse_optional(input)?;
-        let (input, point_data) = Self::parse_data(input)?;
-        Ok((input, (file_data, point_data)))
+    /// Parse the file at the given path and check if the file was read until the end.
+    fn parse_and_check(path: &str) -> Result<(Option<FoamFileData>, Self), String> {
+        // load file
+        let input = std::fs::read_to_string(path).expect("Failed to read file.");
+        // parse
+        match parse_all(&input) {
+            Ok(("", data)) => Ok(data),
+            Ok((rest, data)) => {
+                eprintln!(
+                    "Warning: Parsing did not consume all input. Remaining: {}",
+                    rest
+                );
+                Ok(data)
+            }
+            Err(e) => Err(format!("Failed to parse file {:?}: {}", path, e)),
+        }
     }
 
+    /// Parse the data part of the file.
     fn parse_data(input: &str) -> IResult<&str, Self>;
+}
+
+/// Combine the parsing of the file header and the data.
+fn parse_all<T: FileParser>(input: &str) -> IResult<&str, (Option<FoamFileData>, T)> {
+    let (input, file_data) = FoamFileData::parse_optional(input)?;
+    let (input, point_data) = T::parse_data(input)?;
+    Ok((input, (file_data, point_data)))
 }

@@ -10,7 +10,7 @@ pub struct FaceData {
 }
 
 fn parse_face_vertices(input: &str, n: usize) -> IResult<&str, Vec<usize>> {
-    count(ws(i_usize), n)(input)
+    count(ws(usize_val), n)(input)
 }
 
 fn parse_face(input: &str) -> IResult<&str, Vec<usize>> {
@@ -25,7 +25,7 @@ fn parse_face(input: &str) -> IResult<&str, Vec<usize>> {
 impl FileParser for FaceData {
     fn parse_data(input: &str) -> IResult<&str, FaceData> {
         // Parse the number of faces.
-        let (input, n_faces) = next(i_usize)(input)?;
+        let (input, n_faces) = next(usize_val)(input)?;
         let (input, _) = next(tag("("))(input)?;
         // Parse exactly this many faces.
         let (input, faces) = count(next(parse_face), n_faces)(input)?;
