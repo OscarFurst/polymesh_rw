@@ -1,17 +1,17 @@
 use crate::file_parser::FileParser;
 use crate::parser_base::*;
 use crate::writer_base::{bool_as_num, write_single_data};
+use indexmap::map::IndexMap;
 use nom::{
     bytes::complete::tag, character::complete::char, multi::count, sequence::delimited, IResult,
 };
-use std::collections::HashMap;
 use std::io::prelude::*;
 
 /// Container for the polyMesh faceZones data.
 #[derive(Debug, PartialEq, Clone)]
 pub struct FaceZoneData {
     pub n: usize,
-    pub facezones: HashMap<String, FaceZone>,
+    pub facezones: IndexMap<String, FaceZone>,
 }
 
 /// Container for the data of a single faceZone.

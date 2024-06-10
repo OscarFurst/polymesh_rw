@@ -1,14 +1,14 @@
 use crate::file_parser::FileParser;
 use crate::parser_base::*;
 use crate::writer_base::write_single_data;
+use indexmap::map::IndexMap;
 use nom::{character::complete::char, multi::count, IResult};
-use std::collections::HashMap;
 use std::io::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct PointZoneData {
     pub n: usize,
-    pub pointzones: HashMap<String, PointZone>,
+    pub pointzones: IndexMap<String, PointZone>,
 }
 
 #[derive(Debug, PartialEq, Clone)]

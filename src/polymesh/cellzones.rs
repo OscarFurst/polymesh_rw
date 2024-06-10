@@ -1,15 +1,15 @@
 use crate::file_parser::FileParser;
 use crate::parser_base::*;
 use crate::writer_base::write_single_data;
+use indexmap::map::IndexMap;
 use nom::{character::complete::char, multi::count, IResult};
-use std::collections::HashMap;
 use std::io::prelude::*;
 
 /// Container for the polyMesh cellZones data.
 #[derive(Debug, PartialEq, Clone)]
 pub struct CellZoneData {
     pub n: usize,
-    pub cellzones: HashMap<String, CellZone>,
+    pub cellzones: IndexMap<String, CellZone>,
 }
 
 /// Container for the data of a single cellZone.

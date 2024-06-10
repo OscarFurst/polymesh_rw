@@ -5,24 +5,10 @@ FoamFile
     location    "constant/polyMesh";
     object      boundary;
 }
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 8
 (
-outlet
-{
-    type patch;
-    physicalType patch;
-    nFaces 4;
-    startFace 984;
-}
-
-metal_out
-{
-    type patch;
-    physicalType patch;
-    nFaces 20;
-    startFace 1312;
-}
-
 inlet
 {
     type patch;
@@ -30,31 +16,13 @@ inlet
     nFaces 4;
     startFace 980;
 }
-
-bottom
+outlet
 {
     type patch;
     physicalType patch;
-    nFaces 36;
-    startFace 1352;
+    nFaces 4;
+    startFace 984;
 }
-
-sides
-{
-    type patch;
-    physicalType patch;
-    nFaces 288;
-    startFace 1024;
-}
-
-top
-{
-    type patch;
-    physicalType patch;
-    nFaces 36;
-    startFace 988;
-}
-
 interface
 {
     type patch;
@@ -62,7 +30,27 @@ interface
     nFaces 0;
     startFace 988;
 }
-
+top
+{
+    type patch;
+    physicalType patch;
+    nFaces 36;
+    startFace 988;
+}
+sides
+{
+    type patch;
+    physicalType patch;
+    nFaces 288;
+    startFace 1024;
+}
+metal_out
+{
+    type patch;
+    physicalType patch;
+    nFaces 20;
+    startFace 1312;
+}
 metal_in
 {
     type patch;
@@ -70,5 +58,11 @@ metal_in
     nFaces 20;
     startFace 1332;
 }
-
+bottom
+{
+    type patch;
+    physicalType patch;
+    nFaces 36;
+    startFace 1352;
+}
 )

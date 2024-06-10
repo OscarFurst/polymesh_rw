@@ -92,6 +92,10 @@ impl FoamFileData {
         writeln!(file, "    location    \"{}\";", self.location)?;
         writeln!(file, "    object      {};", self.object)?;
         writeln!(file, "}}")?;
+        writeln!(
+            file,
+            "// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //\n"
+        )?;
         Ok(())
     }
 }

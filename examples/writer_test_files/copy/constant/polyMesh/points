@@ -5,6 +5,8 @@ FoamFile
     location    "constant/polyMesh";
     object      points;
 }
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 215
 (
 (0 0 1)

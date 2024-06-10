@@ -1,14 +1,14 @@
 use crate::file_parser::FileParser;
 use crate::parser_base::*;
+use indexmap::map::IndexMap;
 use nom::{character::complete::char, multi::count, IResult};
-use std::collections::HashMap;
 use std::fmt;
 use std::io::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BoundaryData {
     pub n: usize,
-    pub boundaries: HashMap<String, Boundary>,
+    pub boundaries: IndexMap<String, Boundary>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -69,7 +69,7 @@ impl FileParser for BoundaryData {
         let (input, _) = next(char('('))(input)?;
         // parse boundaries
         let (input, boundary_vector) = count(parse_boundary, n)(input)?;
-        let mut boundaries = HashMap::new();
+        let mut boundaries = IndexMap::new();
         for boundary in &boundary_vector {
             boundaries.insert(boundary.name.clone(), boundary.clone());
         }
@@ -86,7 +86,7 @@ impl FileParser for BoundaryData {
         writeln!(file, "{}", self.n)?;
         writeln!(file, "(")?;
         for boundary in self.boundaries.values() {
-            writeln!(file, "{}", boundary)?;
+            write!(file, "{}", boundary)?;
         }
         writeln!(file, ")")?;
         Ok(())

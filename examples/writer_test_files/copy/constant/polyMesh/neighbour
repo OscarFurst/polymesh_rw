@@ -6,6 +6,8 @@ FoamFile
     location    "constant/polyMesh";
     object      neighbour;
 }
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 980
 (
 4
