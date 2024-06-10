@@ -11,6 +11,7 @@ pub mod neighbour;
 pub mod owner;
 pub mod points;
 pub mod pointzones;
+pub mod sets;
 
 pub struct PolyMesh {
     pub points: (Option<FoamFileData>, points::PointData),
@@ -21,6 +22,7 @@ pub struct PolyMesh {
     pub facezones: (Option<FoamFileData>, facezones::FaceZoneData),
     pub cellzones: (Option<FoamFileData>, cellzones::CellZoneData),
     pub pointzones: (Option<FoamFileData>, pointzones::PointZoneData),
+    pub sets: sets::Sets,
 }
 
 impl PolyMesh {
@@ -33,6 +35,7 @@ impl PolyMesh {
         let facezones = facezones::FaceZoneData::parse(&dir_path.join("faceZones"))?;
         let cellzones = cellzones::CellZoneData::parse(&dir_path.join("cellZones"))?;
         let pointzones = pointzones::PointZoneData::parse(&dir_path.join("pointZones"))?;
+        let sets = sets::Sets::parse(&dir_path.join("sets"));
         Ok(PolyMesh {
             points,
             faces,
@@ -42,6 +45,7 @@ impl PolyMesh {
             facezones,
             cellzones,
             pointzones,
+            sets,
         })
     }
 }
