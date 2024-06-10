@@ -1,6 +1,8 @@
 use crate::file_parser::FileParser;
 use crate::parser_base::*;
+use crate::writer_base::write_single_data;
 use nom::{character::complete::char, multi::count, IResult};
+use std::io::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct PointZoneData {
@@ -14,6 +16,19 @@ pub struct PointZone {
     pub name: String,
     pub n: usize,
     pub points: Vec<usize>,
+}
+
+impl PointZone {
+    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        writeln!(file, "{}", self.name)?;
+        writeln!(file, "{{")?;
+        writeln!(file, "    type pointZone;")?;
+        writeln!(file, "pointLabels      List<label>  ")?;
+        write_single_data(&self.points, file)?;
+        writeln!(file, ";")?;
+        writeln!(file, "}}\n")?;
+        Ok(())
+    }
 }
 
 fn parse_point_zone(input: &str) -> IResult<&str, PointZone> {
@@ -55,5 +70,19 @@ impl FileParser for PointZoneData {
         // closing parenthesis
         let (input, _) = next(char(')'))(input)?;
         Ok((input, PointZoneData { n, pointzones }))
+    }
+
+    fn file_path(&self) -> std::path::PathBuf {
+        std::path::PathBuf::from("constant/polyMesh/pointZones")
+    }
+
+    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        writeln!(file, "{}", self.n)?;
+        writeln!(file, "(")?;
+        for facezone in &self.pointzones {
+            facezone.write_data(file)?;
+        }
+        writeln!(file, ")")?;
+        Ok(())
     }
 }

@@ -2,6 +2,8 @@ use crate::file_parser::FileParser;
 use crate::parser_base::*;
 use nom::{character::complete::char, multi::count, IResult};
 use std::collections::HashMap;
+use std::fmt;
+use std::io::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BoundaryData {
@@ -16,6 +18,19 @@ pub struct Boundary {
     pub physical_type: String,
     pub n_faces: usize,
     pub start_face: usize,
+}
+
+impl fmt::Display for Boundary {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "{}", self.name)?;
+        writeln!(f, "{{")?;
+        writeln!(f, "    type {};", self.boundary_type)?;
+        writeln!(f, "    physicalType {};", self.physical_type)?;
+        writeln!(f, "    nFaces {};", self.n_faces)?;
+        writeln!(f, "    startFace {};", self.start_face)?;
+        writeln!(f, "}}")?;
+        Ok(())
+    }
 }
 
 fn parse_boundary(input: &str) -> IResult<&str, Boundary> {
@@ -61,5 +76,19 @@ impl FileParser for BoundaryData {
         // closing parenthesis
         let (input, _) = next(char(')'))(input)?;
         Ok((input, BoundaryData { n, boundaries }))
+    }
+
+    fn file_path(&self) -> std::path::PathBuf {
+        std::path::PathBuf::from("constant/polyMesh/boundary")
+    }
+
+    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        writeln!(file, "{}", self.n)?;
+        writeln!(file, "(")?;
+        for boundary in self.boundaries.values() {
+            writeln!(file, "{}", boundary)?;
+        }
+        writeln!(file, ")")?;
+        Ok(())
     }
 }

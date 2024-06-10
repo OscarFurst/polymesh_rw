@@ -1,5 +1,6 @@
 use crate::file_parser::FileParser;
 use crate::parser_base::single_i_data;
+use crate::writer_base::write_single_data;
 use nom::IResult;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -14,5 +15,13 @@ impl FileParser for OwnerData {
         let (input, cells) = single_i_data(input)?;
         let n = cells.len();
         Ok((input, OwnerData { n, cells }))
+    }
+
+    fn file_path(&self) -> std::path::PathBuf {
+        std::path::PathBuf::from("constant/polyMesh/owner")
+    }
+
+    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        write_single_data(&self.cells, file)
     }
 }

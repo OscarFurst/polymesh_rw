@@ -1,5 +1,6 @@
 use crate::file_parser::FileParser;
 use crate::parser_base::*;
+use crate::writer_base::write_fixed_witdh_data;
 use nom::{
     bytes::complete::tag, character::complete::digit1, combinator::map, multi::count,
     number::complete::double, IResult,
@@ -33,6 +34,14 @@ impl FileParser for PointData {
         let (input, _) = next(tag(")"))(input)?;
         // Return the new data structure
         Ok((input, PointData { n, points }))
+    }
+
+    fn file_path(&self) -> std::path::PathBuf {
+        std::path::PathBuf::from("constant/polyMesh/points")
+    }
+
+    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        write_fixed_witdh_data(&self.points, file)
     }
 }
 

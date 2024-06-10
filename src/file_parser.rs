@@ -58,7 +58,7 @@ pub trait FileParser: Sized + PartialEq {
     fn parse_data(input: &str) -> IResult<&str, Self>;
 
     /// Write the data part of the provided file.
-    fn write_data(&self, file: &std::fs::File) -> Result<(), Box<dyn std::error::Error>>;
+    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()>;
 
     /// Provides the relative position of the data file in the case directory.
     fn file_path(&self) -> path::PathBuf;

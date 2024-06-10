@@ -1,5 +1,6 @@
 use crate::file_parser::FileParser;
 use crate::parser_base::*;
+use crate::writer_base::write_multi_data;
 use nom::{bytes::complete::tag, character::complete::digit1, multi::count, IResult};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -33,6 +34,14 @@ impl FileParser for FaceData {
         let (input, _) = next(tag(")"))(input)?;
         // Return the new data structure
         Ok((input, FaceData { n: n_faces, faces }))
+    }
+
+    fn file_path(&self) -> std::path::PathBuf {
+        std::path::PathBuf::from("constant/polyMesh/faces")
+    }
+
+    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        write_multi_data(&self.faces, file)
     }
 }
 

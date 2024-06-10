@@ -37,13 +37,10 @@ pub fn write_multi_data<T: std::fmt::Display>(
 
 /// Writes a vector of fixed-width data to a file.
 /// This kind of data is stored as a list of lists without specification of the length of the inner lists.
-pub fn write_fixed_witdh_data<'a, T, I>(
-    data: &'a [I],
-    file: &mut std::fs::File,
-) -> std::io::Result<()>
+pub fn write_fixed_witdh_data<T, I>(data: &[I], file: &mut std::fs::File) -> std::io::Result<()>
 where
     T: std::fmt::Display,
-    &'a I: Iterator<Item = T>,
+    for<'b> &'b I: IntoIterator<Item = &'b T>,
 {
     writeln!(file, "{}", data.len())?;
     writeln!(file, "(")?;
@@ -56,4 +53,12 @@ where
     }
     writeln!(file, ")")?;
     Ok(())
+}
+
+pub fn bool_as_num(b: bool) -> usize {
+    if b {
+        1
+    } else {
+        0
+    }
 }

@@ -1,8 +1,10 @@
 use crate::file_parser::FileParser;
 use crate::parser_base::*;
+use crate::writer_base::{bool_as_num, write_single_data};
 use nom::{
     bytes::complete::tag, character::complete::char, multi::count, sequence::delimited, IResult,
 };
+use std::io::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FaceZoneData {
@@ -19,6 +21,28 @@ pub struct FaceZone {
     // no idea what flipmap is does and what forms it can take, only seen one example so far
     // maybe even useless : https://gitlab.kitware.com/vtk/vtk/-/issues/17103
     pub flipmap: bool,
+}
+
+impl FaceZone {
+    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        writeln!(file, "{}", self.name)?;
+        writeln!(file, "{{")?;
+        writeln!(file, "    type faceZone;")?;
+        writeln!(file, "faceLabels      List<label>  ")?;
+        write_single_data(&self.faces, file)?;
+        writeln!(file, ";")?;
+        writeln!(file, "}}\n")?;
+        Ok(())
+    }
+
+    fn write_flipmap(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        write!(file, "flipMap         List<bool> ")?;
+        write!(file, "{}", self.n)?;
+        write!(file, "{{")?;
+        write!(file, "{}", bool_as_num(self.flipmap))?;
+        writeln!(file, "}};")?;
+        Ok(())
+    }
 }
 
 fn parse_flipmap(input: &str, n: usize) -> IResult<&str, bool> {
@@ -73,5 +97,19 @@ impl FileParser for FaceZoneData {
         // closing parenthesis
         let (input, _) = next(char(')'))(input)?;
         Ok((input, FaceZoneData { n, facezones }))
+    }
+
+    fn file_path(&self) -> std::path::PathBuf {
+        std::path::PathBuf::from("constant/polyMesh/faceZones")
+    }
+
+    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        writeln!(file, "{}", self.n)?;
+        writeln!(file, "(")?;
+        for facezone in &self.facezones {
+            facezone.write_data(file)?;
+        }
+        writeln!(file, ")")?;
+        Ok(())
     }
 }
