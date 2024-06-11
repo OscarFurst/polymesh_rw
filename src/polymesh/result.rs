@@ -1,9 +1,11 @@
 use crate::file_parser::FileParser;
 use crate::parser_base::*;
 use crate::writer_base::*;
+use indexmap::map::IndexMap;
 use nom::combinator::map;
+use nom::multi::fold_many0;
 use nom::number::complete::double;
-use nom::sequence::terminated;
+use nom::sequence::{pair, terminated};
 use nom::{
     branch::alt,
     bytes::complete::tag,
@@ -15,19 +17,74 @@ use nom::{
 };
 use std::io::prelude::*;
 
-// TODO : this is missing "boundaryField" information !!
+#[derive(Debug, PartialEq, Clone)]
+pub struct boundaryField {
+    pub name: String,
+    pub boundary_type: String,
+    pub value: Option<ResultType>,
+    pub parameters: IndexMap<String, String>,
+}
+
+fn parse_boundary_fields(input: &str) -> IResult<&str, IndexMap<String, boundaryField>> {
+    preceded(
+        next(tag("boundaryField")),
+        delimited(
+            next(char('{')),
+            fold_many0(parse_boundary_field, IndexMap::new, |mut map, v| {
+                map.insert(v.name.clone(), v);
+                map
+            }),
+            next(char('}')),
+        ),
+    )(input)
+}
+
+fn parse_boundary_field(input: &str) -> IResult<&str, boundaryField> {
+    let (input, name) = next(string_val)(input)?;
+    let (input, _) = next(char('{'))(input)?;
+    // TODO: we assume to find things in a certain order, but this is not guaranteed...
+    let (input, boundary_type) = next(key_string_semicolon("type"))(input)?;
+    let (input, value) = opt(delimited(
+        next(key_string("value")),
+        parse_field,
+        opt(next(char(';'))),
+    ))(input)?;
+    let (input, parameters) = parse_parameters(input)?;
+    let (input, _) = next(char('}'))(input)?;
+    Ok((
+        input,
+        boundaryField {
+            name,
+            boundary_type,
+            value,
+            parameters,
+        },
+    ))
+}
+
+/// Parses arbitrary key-value pairs and stores them in an IndexMap. Both keys and values are strings.
+fn parse_parameters(input: &str) -> IResult<&str, IndexMap<String, String>> {
+    fold_many0(
+        pair(next(string_val), next(string_val)),
+        IndexMap::new,
+        |mut map: IndexMap<String, String>, (k, v)| {
+            map.insert(k, v);
+            map
+        },
+    )(input)
+}
 
 #[derive(Debug, PartialEq, Clone)]
-enum ResultType {
+pub enum ResultType {
     UniformScalar(f64),
     UniformVector(Vec<f64>),
     Scalar(Vec<f64>),
     Vector(Vec<Vec<f64>>),
 }
 
-fn parse_result(input: &str) -> IResult<&str, ResultType> {
+fn parse_field(input: &str) -> IResult<&str, ResultType> {
     // starts with some information about the field
-    let (input, field_type) = next(key_string("internalField"))(input)?;
+    let (input, field_type) = next(string_val)(input)?;
     match field_type.as_str() {
         "uniform" => parse_uniform(input),
         "nonuniform" => parse_nonuniform(input),
@@ -106,6 +163,7 @@ pub struct ResultData {
     pub n: usize,
     pub dimensions: Dimensions,
     pub result: ResultType,
+    pub boundary_field: Option<IndexMap<String, boundaryField>>,
 }
 
 impl FileParser for ResultData {
@@ -115,12 +173,14 @@ impl FileParser for ResultData {
         // Parse the dimensions.
         let (input, dimensions) = dimension_tag(input)?;
         // Parse the field data.
-        let (input, result) = parse_result(input)?;
+        let (input, result) = preceded(next(tag("internalField")), parse_field)(input)?;
         let n = match &result {
             ResultType::Scalar(values) => values.len(),
             ResultType::Vector(values) => values.len(),
             _ => 1,
         };
+        // Parse the boundary field which is sometimes present (in initial conditions for example).
+        let (input, boundary_field) = opt(parse_boundary_fields)(input)?;
         // Return the new data structure
         Ok((
             input,
@@ -128,6 +188,7 @@ impl FileParser for ResultData {
                 n,
                 dimensions,
                 result,
+                boundary_field,
             },
         ))
     }
@@ -183,6 +244,7 @@ internalField   nonuniform List<scalar>
             n: 4,
             dimensions: [0, 2, -2, 0, 0, 0, 0],
             result: ResultType::Scalar(vec![685.183, 685.183, 685.184, 685.184]),
+            boundary_field: None,
         };
         let (_, actual_value) = ResultData::parse_data(input).unwrap();
         assert_eq!(expected_value, actual_value);
@@ -210,6 +272,7 @@ internalField   nonuniform List<vector>
                 vec![-8.15522e-05, 0.000192606, 0.00828979],
                 vec![-7.90789e-05, 0.000191318, 0.00856647],
             ]),
+            boundary_field: None,
         };
         let (_, actual_value) = ResultData::parse_data(input).unwrap();
         assert_eq!(expected_value, actual_value);
