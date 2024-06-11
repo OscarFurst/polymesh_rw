@@ -1,5 +1,6 @@
 use crate::file_parser::FileParser;
 use crate::foam_file::FoamFileData;
+use std::collections::HashMap;
 use std::error::Error;
 use std::path;
 
@@ -13,6 +14,46 @@ pub mod points;
 pub mod pointzones;
 pub mod result;
 pub mod sets;
+
+pub struct Case {
+    pub poly_mesh: PolyMesh,
+    pub time_directories: HashMap<String, TimeDir>,
+}
+
+impl Case {
+    /// Parses the case directory and returns a Case struct.
+    pub fn parse(dir_path: &path::Path) -> Result<Case, Box<dyn Error>> {
+        let poly_mesh = PolyMesh::parse(&dir_path.join("constant/polyMesh"))?;
+        let mut time_directories = HashMap::new();
+        for entry in std::fs::read_dir(dir_path)? {
+            let entry = entry?;
+            let path = entry.path();
+            if !path.is_dir() {
+                continue;
+            }
+            // Check if the directory name is a number.
+            let dir_name = path.file_name().unwrap().to_str().unwrap();
+            if let Ok(_time) = dir_name.parse::<f64>() {
+                let name = dir_name.to_string();
+                let time_directory = TimeDir::parse(&path)?;
+                time_directories.insert(name, time_directory);
+            }
+        }
+        Ok(Case {
+            poly_mesh,
+            time_directories,
+        })
+    }
+
+    /// Writes the case contents to the given directory.
+    pub fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
+        self.poly_mesh.write(path)?;
+        for (_, time_directory) in &self.time_directories {
+            time_directory.write(&path)?;
+        }
+        Ok(())
+    }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FileContent<T: FileParser> {
@@ -29,6 +70,46 @@ impl<T: FileParser> FileContent<T> {
         let mut file = std::fs::File::create(full_path)?;
         self.meta.write_meta(&mut file)?;
         self.data.write_data(&mut file)?;
+        Ok(())
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct TimeDir {
+    pub time: f64,
+    // Keys: variable names.
+    pub field_values: HashMap<String, FileContent<result::ResultData>>,
+    // TODO : missing the "uniform" directory
+}
+
+impl TimeDir {
+    pub fn parse(path: &path::Path) -> Result<TimeDir, Box<dyn Error>> {
+        let time = path.file_name().unwrap().to_str().unwrap().parse::<f64>()?;
+        // TODO : parse "uniform" directory
+        let mut field_values = HashMap::new();
+        for entry in std::fs::read_dir(path)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir() {
+                continue;
+            }
+            let name = path
+                .file_name()
+                .expect("Unable to extract file name while parsing time directory.")
+                .to_str()
+                .expect("File name in time directory is not valid unicode.")
+                .to_string();
+            let result_data = result::ResultData::parse(&path)?;
+            field_values.insert(name, result_data);
+        }
+        Ok(TimeDir { time, field_values })
+    }
+
+    /// path: the path to the case directory.
+    pub fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
+        for (_, result) in &self.field_values {
+            result.write(&path)?;
+        }
         Ok(())
     }
 }
