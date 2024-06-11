@@ -18,7 +18,7 @@ fn point_coordinates(input: &str) -> IResult<&str, Point> {
     map(count(ws(double), 3), |v| [v[0], v[1], v[2]])(input)
 }
 fn point(input: &str) -> IResult<&str, Point> {
-    in_parentheses(point_coordinates)(input)
+    inline_parentheses(point_coordinates)(input)
 }
 
 impl FileParser for PointData {

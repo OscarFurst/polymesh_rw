@@ -60,7 +60,7 @@ fn parse_point_zone(input: &str) -> IResult<&str, PointZone> {
 }
 
 impl FileParser for PointZoneData {
-    /// Assumes the remaining input contains the point data.
+    /// Assumes the remaining input contains the pointzone data.
     fn parse_data(input: &str) -> IResult<&str, PointZoneData> {
         // number of point zones
         let (input, n) = next(usize_val)(input)?;

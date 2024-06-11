@@ -50,7 +50,7 @@ pub struct Set {
 }
 
 impl FileParser for Set {
-    /// Assumes the remaining input contains the data.
+    /// Assumes the remaining input contains the set data.
     fn parse_data(input: &str) -> IResult<&str, Set> {
         let (input, labels) = single_i_data(input)?;
         let n = labels.len();

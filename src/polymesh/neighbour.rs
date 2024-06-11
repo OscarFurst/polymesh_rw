@@ -10,7 +10,7 @@ pub struct NeighbourData {
 }
 
 impl FileParser for NeighbourData {
-    /// Assumes the remaining input contains the point data.
+    /// Assumes the remaining input contains the neighbour data.
     fn parse_data(input: &str) -> IResult<&str, NeighbourData> {
         let (input, cells) = single_i_data(input)?;
         let n = cells.len();

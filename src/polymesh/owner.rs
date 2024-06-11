@@ -10,7 +10,7 @@ pub struct OwnerData {
 }
 
 impl FileParser for OwnerData {
-    /// Assumes the remaining input contains the point data.
+    /// Assumes the remaining input contains the owner data.
     fn parse_data(input: &str) -> IResult<&str, OwnerData> {
         let (input, cells) = single_i_data(input)?;
         let n = cells.len();

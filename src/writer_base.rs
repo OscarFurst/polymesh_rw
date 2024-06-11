@@ -13,6 +13,23 @@ pub fn write_single_data<T: std::fmt::Display>(
     Ok(())
 }
 
+/// Writes a vector of data to a file as a space-separated list.
+pub fn write_vector_content<T: std::fmt::Display>(
+    data: &[T],
+    file: &mut std::fs::File,
+) -> std::io::Result<()> {
+    let mut first = true;
+    for d in data {
+        if first {
+            first = false;
+        } else {
+            write!(file, " ")?;
+        }
+        write!(file, "{}", d)?;
+    }
+    Ok(())
+}
+
 /// Writes a vector of variable-width data to a file.
 /// This kind of data is stored as a list of lists with specification of the length of the inner lists:
 /// ```

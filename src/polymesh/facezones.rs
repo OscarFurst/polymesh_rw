@@ -90,7 +90,7 @@ fn parse_face_zone(input: &str) -> IResult<&str, FaceZone> {
 }
 
 impl FileParser for FaceZoneData {
-    /// Assumes the remaining input contains the point data.
+    /// Assumes the remaining input contains the facezone data.
     fn parse_data(input: &str) -> IResult<&str, FaceZoneData> {
         // number of face zones
         let (input, n) = next(usize_val)(input)?;

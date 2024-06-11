@@ -62,7 +62,7 @@ fn parse_cell_zone(input: &str) -> IResult<&str, CellZone> {
 }
 
 impl FileParser for CellZoneData {
-    /// Assumes the remaining input contains the point data.
+    /// Assumes the remaining input contains the cellzone data.
     fn parse_data(input: &str) -> IResult<&str, CellZoneData> {
         // number of cell zones
         let (input, n) = next(usize_val)(input)?;

@@ -11,6 +11,7 @@ pub mod neighbour;
 pub mod owner;
 pub mod points;
 pub mod pointzones;
+pub mod result;
 pub mod sets;
 
 #[derive(Debug, PartialEq, Clone)]

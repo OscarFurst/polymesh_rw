@@ -19,7 +19,7 @@ fn parse_face(input: &str) -> IResult<&str, Vec<usize>> {
     let n_vertices = n_vertices_str
         .parse()
         .expect("Failed to parse number of vertices in face.");
-    let (input, vertices) = in_parentheses(move |i| parse_face_vertices(i, n_vertices))(input)?;
+    let (input, vertices) = inline_parentheses(move |i| parse_face_vertices(i, n_vertices))(input)?;
     Ok((input, vertices))
 }
 

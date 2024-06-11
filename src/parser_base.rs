@@ -1,9 +1,10 @@
 use nom::{
     branch::alt,
     bytes::complete::{is_not, tag, take_until, take_while},
-    character::complete::{char, digit1, multispace0, multispace1},
+    character::complete::{char, digit0, digit1, multispace0, multispace1},
     combinator::{map, map_res, value},
-    multi::{count, many0},
+    multi::{count, many0, many1},
+    number::complete::double,
     sequence::{delimited, pair, preceded, terminated, tuple},
     IResult,
 };
@@ -24,18 +25,27 @@ where
 /// whitespace, returning the output of `inner`.
 pub fn lws<'a, F, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
 where
-    F: Fn(&'a str) -> IResult<&'a str, O>,
+    F: FnMut(&'a str) -> IResult<&'a str, O>,
 {
     preceded(multispace0, inner)
 }
 
 /// A combinator that takes a parser `inner` and produces a parser that also consumes both leading and
-/// trailing parentheses, returning the output of `inner`.
-pub fn in_parentheses<'a, F: 'a, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
+/// trailing parentheses on the same line, returning the output of `inner`.
+pub fn inline_parentheses<'a, F: 'a, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
 where
     F: Fn(&'a str) -> IResult<&'a str, O>,
 {
     delimited(char('('), inner, char(')'))
+}
+
+/// A combinator that takes a parser `inner` and produces a parser that also consumes both leading and
+/// trailing parentheses, even when on their own lines, returning the output of `inner`.
+pub fn block_parentheses<'a, F: 'a, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
+where
+    F: Fn(&'a str) -> IResult<&'a str, O>,
+{
+    delimited(next(char('(')), inner, next(char(')')))
 }
 
 /// A combinator that takes a parser `inner` and produces a parser that also consumes all leading
@@ -97,14 +107,40 @@ pub fn key_usize_semicolon<'a>(name: &str) -> impl Fn(&'a str) -> IResult<&str, 
 /// A parser that consumes a list of integers, preceded by the integer count, enclosed in parentheses and returns them as a `Vec<usize>`.
 /// This format is used for multiple polymesh elements such as owner, neighbour, etc.
 pub fn single_i_data(input: &str) -> IResult<&str, Vec<usize>> {
-    // data always starts with the number of elements, followed by an opening parenthesis
+    // data always starts with the number of elements
     let (input, n) = next(usize_val)(input)?;
-    let (input, _) = next(char('('))(input)?;
     // now comes the actual data
-    let (input, data) = count(next(usize_val), n)(input)?;
-    // and we close with a closing parenthesis
-    let (input, _) = next(char(')'))(input)?;
-    Ok((input, data))
+    delimited(next(char('(')), count(next(usize_val), n), next(char(')')))(input)
+}
+
+/// Parses a list of `double` values separated by whitespace.
+pub fn double_values(input: &str) -> IResult<&str, Vec<f64>> {
+    many1(lws(double))(input)
+}
+
+/// A parser that consumes a list of `double` in parentheses, potentially preceded by the number of entries.
+/// This corresponds to the format of vectors, e.g. : (1.0 0.0 0.0)
+/// The result is returned as a `Vec<usize>`.
+pub fn double_vector(input: &str) -> IResult<&str, Vec<f64>> {
+    preceded(digit0, inline_parentheses(double_values))(input)
+}
+
+pub fn double_vector_field(input: &str) -> IResult<&str, Vec<Vec<f64>>> {
+    // always starts with the number of entries
+    let (input, n) = next(usize_val)(input)?;
+    // then we have a list of vectors
+    delimited(
+        next(char('(')),
+        count(next(double_vector), n),
+        next(char(')')),
+    )(input)
+}
+
+pub fn double_scalar_field(input: &str) -> IResult<&str, Vec<f64>> {
+    // always starts with the number of entries
+    let (input, n) = next(usize_val)(input)?;
+    // then we have a list of vectors
+    delimited(next(char('(')), count(next(double), n), next(char(')')))(input)
 }
 
 /// Discarders
@@ -122,18 +158,6 @@ pub fn known_key_value_semicolon<'a, 'b>(
 ) -> impl Fn(&'a str) -> IResult<&str, ()> + 'b {
     |i: &'a str| terminated(known_key_value(name, val), semicolon)(i)
 }
-
-// pub fn known_key_value<'a>(input: &'a str, name: &str, val: &str) -> IResult<&'a str, ()> {
-//     value((), pair(tag(name), ws(tag(val))))(input)
-// }
-
-// pub fn known_key_value_semicolon<'a>(
-//     input: &'a str,
-//     name: &str,
-//     val: &str,
-// ) -> IResult<&'a str, ()> {
-//     value((), terminated(pair(tag(name), ws(tag(val))), semicolon))(input)
-// }
 
 pub fn discard_line_comment(input: &str) -> IResult<&str, ()> {
     value((), pair(tag("//"), is_not("\n\r")))(input)
