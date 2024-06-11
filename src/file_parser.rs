@@ -65,8 +65,8 @@ pub trait FileParser: Sized + PartialEq {
 }
 
 /// Combine the parsing of the file header and the data.
-fn parse_all<T: FileParser>(input: &str) -> IResult<&str, (Option<FoamFileData>, T)> {
-    let (input, file_data) = FoamFileData::parse_optional(input)?;
+fn parse_all<T: FileParser>(input: &str) -> IResult<&str, (FoamFileData, T)> {
+    let (input, file_data) = FoamFileData::parse(input)?;
     let (input, point_data) = T::parse_data(input)?;
     let (input, _) = discard_garbage(input)?;
     Ok((input, (file_data, point_data)))

@@ -16,20 +16,18 @@ pub mod sets;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FileContent<T: FileParser> {
-    pub meta: Option<FoamFileData>,
+    pub meta: FoamFileData,
     pub data: T,
 }
 impl<T: FileParser> FileContent<T> {
     /// Write the file to the given case directory.
     fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
-        let full_path = path.join(self.data.file_path());
+        let full_path = path.join(self.meta.relative_file_path());
         if let Some(p) = full_path.parent() {
             std::fs::create_dir_all(p)?;
         }
         let mut file = std::fs::File::create(full_path)?;
-        if let Some(meta) = &self.meta {
-            meta.write_meta(&mut file)?;
-        }
+        self.meta.write_meta(&mut file)?;
         self.data.write_data(&mut file)?;
         Ok(())
     }

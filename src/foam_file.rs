@@ -74,11 +74,10 @@ impl FoamFileData {
     }
 
     pub fn parse_optional(input: &str) -> IResult<&str, Option<FoamFileData>> {
-        let (input, file_data) = opt(FoamFileData::parse)(input)?;
-        Ok((input, file_data))
+        opt(FoamFileData::parse)(input)
     }
 
-    pub fn write_meta(&self, file: &mut std::fs::File) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn write_meta(&self, file: &mut std::fs::File) -> std::io::Result<()> {
         writeln!(file, "FoamFile")?;
         writeln!(file, "{{")?;
         if let Some(version) = &self.version {
@@ -95,8 +94,12 @@ impl FoamFileData {
         writeln!(
             file,
             "// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //\n"
-        )?;
-        Ok(())
+        )
+    }
+
+    // Returns the relative path to the object from the case directory.
+    pub fn relative_file_path(&self) -> String {
+        self.location.clone() + "/" + &self.object
     }
 }
 

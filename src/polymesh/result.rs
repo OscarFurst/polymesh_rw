@@ -18,14 +18,39 @@ use nom::{
 use std::io::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct boundaryField {
+pub struct BoundaryField {
     pub name: String,
     pub boundary_type: String,
     pub value: Option<ResultType>,
     pub parameters: IndexMap<String, String>,
 }
 
-fn parse_boundary_fields(input: &str) -> IResult<&str, IndexMap<String, boundaryField>> {
+fn write_boundary_fields(
+    fieldlist: &Option<IndexMap<String, BoundaryField>>,
+    file: &mut std::fs::File,
+) -> std::io::Result<()> {
+    if let Some(fieldlist) = fieldlist {
+        writeln!(file, "boundaryField")?;
+        writeln!(file, "{{")?;
+        for (name, boundaryfield) in fieldlist {
+            writeln!(file, "{}", name)?;
+            writeln!(file, "{{")?;
+            writeln!(file, "type            {};", boundaryfield.boundary_type)?;
+            if let Some(value) = &boundaryfield.value {
+                write!(file, "value           ")?;
+                write_result_type(file, value)?;
+            }
+            for (key, value) in &boundaryfield.parameters {
+                writeln!(file, "{} {};", key, value)?;
+            }
+            writeln!(file, "}}")?;
+        }
+        writeln!(file, "}}")?;
+    }
+    Ok(())
+}
+
+fn parse_boundary_fields(input: &str) -> IResult<&str, IndexMap<String, BoundaryField>> {
     preceded(
         next(tag("boundaryField")),
         delimited(
@@ -39,7 +64,7 @@ fn parse_boundary_fields(input: &str) -> IResult<&str, IndexMap<String, boundary
     )(input)
 }
 
-fn parse_boundary_field(input: &str) -> IResult<&str, boundaryField> {
+fn parse_boundary_field(input: &str) -> IResult<&str, BoundaryField> {
     let (input, name) = next(string_val)(input)?;
     let (input, _) = next(char('{'))(input)?;
     // TODO: we assume to find things in a certain order, but this is not guaranteed...
@@ -53,7 +78,7 @@ fn parse_boundary_field(input: &str) -> IResult<&str, boundaryField> {
     let (input, _) = next(char('}'))(input)?;
     Ok((
         input,
-        boundaryField {
+        BoundaryField {
             name,
             boundary_type,
             value,
@@ -80,6 +105,26 @@ pub enum ResultType {
     UniformVector(Vec<f64>),
     Scalar(Vec<f64>),
     Vector(Vec<Vec<f64>>),
+}
+
+fn write_result_type(file: &mut std::fs::File, result: &ResultType) -> std::io::Result<()> {
+    match result {
+        ResultType::UniformScalar(value) => writeln!(file, "uniform {};", value)?,
+        ResultType::UniformVector(value) => {
+            write!(file, "uniform")?;
+            write_vector_content(&value, file)?;
+            writeln!(file, ";")?
+        }
+        ResultType::Scalar(ref values) => {
+            write!(file, "nonuniform List<scalar>")?;
+            write_single_data(values, file)?
+        }
+        ResultType::Vector(ref values) => {
+            write!(file, "nonuniform List<vector>")?;
+            write_fixed_witdh_data(values, file)?
+        }
+    }
+    Ok(())
 }
 
 fn parse_field(input: &str) -> IResult<&str, ResultType> {
@@ -163,7 +208,7 @@ pub struct ResultData {
     pub n: usize,
     pub dimensions: Dimensions,
     pub result: ResultType,
-    pub boundary_field: Option<IndexMap<String, boundaryField>>,
+    pub boundary_field: Option<IndexMap<String, BoundaryField>>,
 }
 
 impl FileParser for ResultData {
@@ -200,26 +245,9 @@ impl FileParser for ResultData {
 
     fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
         println!("{}\n", dimensions_string(&self.dimensions));
-        match &self.result {
-            ResultType::UniformScalar(value) => {
-                writeln!(file, "internalField   uniform {};", value)?;
-                Ok(())
-            }
-            ResultType::UniformVector(value) => {
-                write!(file, "internalField   uniform (;")?;
-                write_vector_content(&value, file)?;
-                writeln!(file, ");")?;
-                Ok(())
-            }
-            ResultType::Scalar(ref values) => {
-                writeln!(file, "internalField   nonuniform List<scalar> ")?;
-                write_single_data(values, file)
-            }
-            ResultType::Vector(ref values) => {
-                writeln!(file, "internalField   nonuniform List<vector> ")?;
-                write_fixed_witdh_data(values, file)
-            }
-        }
+        write!(file, "internalField   ")?;
+        write_result_type(file, &self.result)?;
+        write_boundary_fields(&self.boundary_field, file)
     }
 }
 
