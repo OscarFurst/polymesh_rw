@@ -1,13 +1,10 @@
 use crate::file_parser::FileParser;
+use crate::foam_structure::FoamField;
 use crate::parser_base::*;
-use crate::writer_base::*;
 use indexmap::map::IndexMap;
-use nom::combinator::map;
 use nom::multi::fold_many0;
-use nom::number::complete::double;
-use nom::sequence::{pair, terminated};
+use nom::sequence::pair;
 use nom::{
-    branch::alt,
     bytes::complete::tag,
     character::complete::{char, digit1},
     combinator::{map_res, opt, recognize},
@@ -21,7 +18,7 @@ use std::io::prelude::*;
 pub struct BoundaryField {
     pub name: String,
     pub boundary_type: String,
-    pub value: Option<ResultType>,
+    pub value: Option<FoamField>,
     pub parameters: IndexMap<String, String>,
 }
 
@@ -38,7 +35,7 @@ fn write_boundary_fields(
             writeln!(file, "type            {};", boundaryfield.boundary_type)?;
             if let Some(value) = &boundaryfield.value {
                 write!(file, "value           ")?;
-                write_result_type(file, value)?;
+                value.write(file)?;
             }
             for (key, value) in &boundaryfield.parameters {
                 writeln!(file, "{} {};", key, value)?;
@@ -71,7 +68,7 @@ fn parse_boundary_field(input: &str) -> IResult<&str, BoundaryField> {
     let (input, boundary_type) = next(key_string_semicolon("type"))(input)?;
     let (input, value) = opt(delimited(
         next(key_string("value")),
-        parse_field,
+        FoamField::parse,
         opt(next(char(';'))),
     ))(input)?;
     let (input, parameters) = parse_parameters(input)?;
@@ -97,77 +94,6 @@ fn parse_parameters(input: &str) -> IResult<&str, IndexMap<String, String>> {
             map
         },
     )(input)
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum ResultType {
-    UniformScalar(f64),
-    UniformVector(Vec<f64>),
-    Scalar(Vec<f64>),
-    Vector(Vec<Vec<f64>>),
-}
-
-fn write_result_type(file: &mut std::fs::File, result: &ResultType) -> std::io::Result<()> {
-    match result {
-        ResultType::UniformScalar(value) => writeln!(file, "uniform {};", value)?,
-        ResultType::UniformVector(value) => {
-            write!(file, "uniform")?;
-            write_vector_content(&value, file)?;
-            writeln!(file, ";")?
-        }
-        ResultType::Scalar(ref values) => {
-            write!(file, "nonuniform List<scalar>")?;
-            write_single_data(values, file)?
-        }
-        ResultType::Vector(ref values) => {
-            write!(file, "nonuniform List<vector>")?;
-            write_fixed_witdh_data(values, file)?
-        }
-    }
-    Ok(())
-}
-
-fn parse_field(input: &str) -> IResult<&str, ResultType> {
-    // starts with some information about the field
-    let (input, field_type) = next(string_val)(input)?;
-    match field_type.as_str() {
-        "uniform" => parse_uniform(input),
-        "nonuniform" => parse_nonuniform(input),
-        _ => Err(nom::Err::Error(nom::error::Error {
-            input,
-            code: nom::error::ErrorKind::Tag,
-        })),
-    }
-}
-
-fn parse_uniform(input: &str) -> IResult<&str, ResultType> {
-    terminated(
-        alt((
-            map(lws(double), |v| ResultType::UniformScalar(v)),
-            map(lws(inline_parentheses(double_values)), |v| {
-                ResultType::UniformVector(v)
-            }),
-        )),
-        char(';'),
-    )(input)
-}
-
-fn parse_nonuniform(input: &str) -> IResult<&str, ResultType> {
-    // now comes "List<scalar>" or "List<vector>"
-    preceded(
-        delimited(lws(tag("List<")), string_val, char('>')),
-        alt((scalar_field, vector_field)),
-    )(input)
-}
-
-fn scalar_field(input: &str) -> IResult<&str, ResultType> {
-    let (input, values) = double_scalar_field(input)?;
-    Ok((input, ResultType::Scalar(values)))
-}
-
-fn vector_field(input: &str) -> IResult<&str, ResultType> {
-    let (input, values) = double_vector_field(input)?;
-    Ok((input, ResultType::Vector(values)))
 }
 
 type Dimensions = [i32; 7];
@@ -207,7 +133,7 @@ fn dimension_tag(input: &str) -> IResult<&str, Dimensions> {
 pub struct ResultData {
     pub n: usize,
     pub dimensions: Dimensions,
-    pub result: ResultType,
+    pub result: FoamField,
     pub boundary_field: Option<IndexMap<String, BoundaryField>>,
 }
 
@@ -218,10 +144,10 @@ impl FileParser for ResultData {
         // Parse the dimensions.
         let (input, dimensions) = dimension_tag(input)?;
         // Parse the field data.
-        let (input, result) = preceded(next(tag("internalField")), parse_field)(input)?;
+        let (input, result) = preceded(next(tag("internalField")), FoamField::parse)(input)?;
         let n = match &result {
-            ResultType::Scalar(values) => values.len(),
-            ResultType::Vector(values) => values.len(),
+            FoamField::Scalar(values) => values.len(),
+            FoamField::Vector(values) => values.len(),
             _ => 1,
         };
         // Parse the boundary field which is sometimes present (in initial conditions for example).
@@ -246,7 +172,7 @@ impl FileParser for ResultData {
     fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
         println!("{}\n", dimensions_string(&self.dimensions));
         write!(file, "internalField   ")?;
-        write_result_type(file, &self.result)?;
+        self.result.write(file)?;
         write_boundary_fields(&self.boundary_field, file)
     }
 }
@@ -271,7 +197,7 @@ internalField   nonuniform List<scalar>
         let expected_value = ResultData {
             n: 4,
             dimensions: [0, 2, -2, 0, 0, 0, 0],
-            result: ResultType::Scalar(vec![685.183, 685.183, 685.184, 685.184]),
+            result: FoamField::Scalar(vec![685.183, 685.183, 685.184, 685.184]),
             boundary_field: None,
         };
         let (_, actual_value) = ResultData::parse_data(input).unwrap();
@@ -294,7 +220,7 @@ internalField   nonuniform List<vector>
         let expected_value = ResultData {
             n: 4,
             dimensions: [0, 1, -1, 0, 0, 0, 0],
-            result: ResultType::Vector(vec![
+            result: FoamField::Vector(vec![
                 vec![-8.52809e-05, 0.00019428, 0.00777701],
                 vec![-8.36566e-05, 0.00019361, 0.00802691],
                 vec![-8.15522e-05, 0.000192606, 0.00828979],

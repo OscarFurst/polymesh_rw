@@ -43,7 +43,7 @@ where
 /// trailing parentheses, even when on their own lines, returning the output of `inner`.
 pub fn block_parentheses<'a, F: 'a, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
 where
-    F: Fn(&'a str) -> IResult<&'a str, O>,
+    F: FnMut(&'a str) -> IResult<&'a str, O>,
 {
     delimited(next(char('(')), inner, next(char(')')))
 }
@@ -82,8 +82,9 @@ pub fn bool(input: &str) -> IResult<&str, bool> {
     map(alt((char('0'), char('1'))), |x| x == '1')(input)
 }
 
-pub fn semicolon(input: &str) -> IResult<&str, &str> {
-    lws(tag(";"))(input)
+/// Semicolon on the same line
+pub fn semicolon(input: &str) -> IResult<&str, char> {
+    next(char(';'))(input)
 }
 
 /// Aggregate parsers
