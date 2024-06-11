@@ -121,10 +121,10 @@ pub struct PolyMesh {
     pub owner: FileContent<owner::OwnerData>,
     pub neighbour: FileContent<neighbour::NeighbourData>,
     pub boundary: FileContent<boundary::BoundaryData>,
-    pub facezones: FileContent<facezones::FaceZoneData>,
-    pub cellzones: FileContent<cellzones::CellZoneData>,
-    pub pointzones: FileContent<pointzones::PointZoneData>,
-    pub sets: sets::Sets,
+    pub facezones: Option<FileContent<facezones::FaceZoneData>>,
+    pub cellzones: Option<FileContent<cellzones::CellZoneData>>,
+    pub pointzones: Option<FileContent<pointzones::PointZoneData>>,
+    pub sets: Option<sets::Sets>,
 }
 
 impl PolyMesh {
@@ -134,10 +134,10 @@ impl PolyMesh {
         let owner = owner::OwnerData::parse(&dir_path.join("owner"))?;
         let neighbour = neighbour::NeighbourData::parse(&dir_path.join("neighbour"))?;
         let boundary = boundary::BoundaryData::parse(&dir_path.join("boundary"))?;
-        let facezones = facezones::FaceZoneData::parse(&dir_path.join("faceZones"))?;
-        let cellzones = cellzones::CellZoneData::parse(&dir_path.join("cellZones"))?;
-        let pointzones = pointzones::PointZoneData::parse(&dir_path.join("pointZones"))?;
-        let sets = sets::Sets::parse(&dir_path.join("sets"));
+        let facezones = facezones::FaceZoneData::parse(&dir_path.join("faceZones")).ok();
+        let cellzones = cellzones::CellZoneData::parse(&dir_path.join("cellZones")).ok();
+        let pointzones = pointzones::PointZoneData::parse(&dir_path.join("pointZones")).ok();
+        let sets = sets::Sets::parse(&dir_path.join("sets")).ok();
         Ok(PolyMesh {
             points,
             faces,
@@ -152,15 +152,18 @@ impl PolyMesh {
     }
 
     pub fn parse_and_assert(dir_path: &path::Path) -> PolyMesh {
-        let points = points::PointData::parse_and_assert(&dir_path.join("points"));
-        let faces = faces::FaceData::parse_and_assert(&dir_path.join("faces"));
-        let owner = owner::OwnerData::parse_and_assert(&dir_path.join("owner"));
-        let neighbour = neighbour::NeighbourData::parse_and_assert(&dir_path.join("neighbour"));
-        let boundary = boundary::BoundaryData::parse_and_assert(&dir_path.join("boundary"));
-        let facezones = facezones::FaceZoneData::parse_and_assert(&dir_path.join("faceZones"));
-        let cellzones = cellzones::CellZoneData::parse_and_assert(&dir_path.join("cellZones"));
-        let pointzones = pointzones::PointZoneData::parse_and_assert(&dir_path.join("pointZones"));
-        let sets = sets::Sets::parse(&dir_path.join("sets"));
+        let points = points::PointData::parse_and_assert(&dir_path.join("points")).unwrap();
+        let faces = faces::FaceData::parse_and_assert(&dir_path.join("faces")).unwrap();
+        let owner = owner::OwnerData::parse_and_assert(&dir_path.join("owner")).unwrap();
+        let neighbour =
+            neighbour::NeighbourData::parse_and_assert(&dir_path.join("neighbour")).unwrap();
+        let boundary =
+            boundary::BoundaryData::parse_and_assert(&dir_path.join("boundary")).unwrap();
+        let facezones = facezones::FaceZoneData::parse_and_assert(&dir_path.join("faceZones")).ok();
+        let cellzones = cellzones::CellZoneData::parse_and_assert(&dir_path.join("cellZones")).ok();
+        let pointzones =
+            pointzones::PointZoneData::parse_and_assert(&dir_path.join("pointZones")).ok();
+        let sets = sets::Sets::parse(&dir_path.join("sets")).ok();
         PolyMesh {
             points,
             faces,
@@ -180,10 +183,18 @@ impl PolyMesh {
         self.owner.write(path)?;
         self.neighbour.write(path)?;
         self.boundary.write(path)?;
-        self.facezones.write(path)?;
-        self.cellzones.write(path)?;
-        self.pointzones.write(path)?;
-        self.sets.write(path)?;
+        if let Some(facezones) = &self.facezones {
+            facezones.write(path)?;
+        }
+        if let Some(cellzones) = &self.cellzones {
+            cellzones.write(path)?;
+        }
+        if let Some(pointzones) = &self.pointzones {
+            pointzones.write(path)?;
+        }
+        if let Some(sets) = &self.sets {
+            sets.write(path)?;
+        }
         Ok(())
     }
 }

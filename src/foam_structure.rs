@@ -27,14 +27,14 @@ use std::io::prelude::*;
 /// }
 /// ```
 #[derive(Debug, PartialEq, Clone)]
-struct FoamStructure {
-    name: String,
-    content: IndexMap<String, FoamValue>,
+pub struct FoamStructure {
+    pub name: String,
+    pub content: IndexMap<String, FoamValue>,
 }
 
 impl FoamStructure {
     /// Parse a FoamStructure from the given input.
-    fn parse(input: &str) -> IResult<&str, FoamStructure> {
+    pub fn parse(input: &str) -> IResult<&str, FoamStructure> {
         let (input, name) = next(string_val)(input)?;
         let (input, content) = delimited(
             next(char('{')),
@@ -55,10 +55,34 @@ impl FoamStructure {
     fn parse_pair(input: &str) -> IResult<&str, (String, FoamValue)> {
         pair(next(string_val), lws(FoamValue::parse))(input)
     }
+
+    /// Write the structure to the given file.
+    pub fn write(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        writeln!(file, "{}", self.name)?;
+        writeln!(file, "{{")?;
+        for (key, value) in &self.content {
+            write!(file, "    {: <15} ", key)?;
+            value.write(file)?;
+        }
+        writeln!(file, "}}")?;
+        Ok(())
+    }
+
+    /// Write the structure to the given file, but without the name.
+    /// This is used for recursive writing of structures.
+    fn write_recursive(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        writeln!(file, "\n    {{")?;
+        for (key, value) in &self.content {
+            write!(file, "    {}", key)?;
+            value.write(file)?;
+        }
+        writeln!(file, "    }}")?;
+        Ok(())
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
-enum FoamValue {
+pub enum FoamValue {
     String(String),
     Integer(usize),
     Float(f64),
@@ -103,6 +127,26 @@ impl FoamValue {
         }
         // If none of the above, it is a string or something that is not implemented yet.
         map(terminated(string_val, semicolon), FoamValue::String)(input)
+    }
+
+    /// Write the value to the given file.
+    fn write(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+        match self {
+            FoamValue::String(value) => writeln!(file, "{};", value)?,
+            FoamValue::Integer(value) => writeln!(file, "{};", value)?,
+            FoamValue::Float(value) => writeln!(file, "{};", value)?,
+            FoamValue::Field(value) => {
+                value.write(file)?;
+                writeln!(file, ";")?;
+            }
+            FoamValue::List(values) => {
+                write!(file, "List<word> ")?;
+                write_single_data(values, file)?;
+                writeln!(file, ";")?
+            }
+            FoamValue::Structure(value) => value.write_recursive(file)?,
+        }
+        Ok(())
     }
 }
 

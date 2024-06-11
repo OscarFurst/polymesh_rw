@@ -8,21 +8,23 @@ use std::path;
 /// The trait takes care of the file header so that only the data parsing needs to be implemented.
 pub trait FileParser: Sized + PartialEq {
     /// Parse the file at the given path.
-    fn parse(path: &path::Path) -> Result<FileContent<Self>, String> {
+    fn parse(path: &path::Path) -> std::io::Result<FileContent<Self>> {
         // load file
-        let input = std::fs::read_to_string(path)
-            .expect(format!("Failed to read file {:?}.", path).as_str());
+        let input = std::fs::read_to_string(path)?;
         // parse
         match parse_all(&input) {
             Ok((_, (meta, data))) => Ok(FileContent { meta, data }),
-            Err(e) => Err(format!("Failed to parse file {:?}: {}", path, e)),
+            Err(e) => Err(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                format!("Failed to parse file {:?}: {}", path, e),
+            )),
         }
     }
 
     /// Parse the file at the given path and check if the file was read until the end.
-    fn parse_and_check(path: &path::Path) -> Result<FileContent<Self>, String> {
+    fn parse_and_check(path: &path::Path) -> std::io::Result<FileContent<Self>> {
         // load file
-        let input = std::fs::read_to_string(path).expect("Failed to read file.");
+        let input = std::fs::read_to_string(path)?;
         // parse
         match parse_all(&input) {
             Ok(("", (meta, data))) => Ok(FileContent { meta, data }),
@@ -33,17 +35,20 @@ pub trait FileParser: Sized + PartialEq {
                 );
                 Ok(FileContent { meta, data })
             }
-            Err(e) => Err(format!("Failed to parse file {:?}: {}", path, e)),
+            Err(e) => Err(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                format!("Failed to parse file {:?}: {}", path, e),
+            )),
         }
     }
 
     /// Parse the file at the given path and check if the file was read until the end.
-    fn parse_and_assert(path: &path::Path) -> FileContent<Self> {
+    fn parse_and_assert(path: &path::Path) -> std::io::Result<FileContent<Self>> {
         // load file
-        let input = std::fs::read_to_string(path).expect("Failed to read file.");
+        let input = std::fs::read_to_string(path)?;
         // parse
         match parse_all(&input) {
-            Ok(("", (meta, data))) => FileContent { meta, data },
+            Ok(("", (meta, data))) => Ok(FileContent { meta, data }),
             Ok((rest, _)) => {
                 panic!(
                     "Error: Parsing did not consume all input. Remaining: {}",

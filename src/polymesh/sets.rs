@@ -16,7 +16,14 @@ pub struct Sets {
 
 impl Sets {
     /// path is the path to the "sets" directory.
-    pub fn parse(path: &path::Path) -> Self {
+    pub fn parse(path: &path::Path) -> std::io::Result<Self> {
+        // check if the directory exists
+        if !path.is_dir() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("Directory {:?} not found.", path),
+            ));
+        }
         let set_files = fs::read_dir(path).unwrap();
         let mut sets = HashMap::new();
         for file in set_files {
@@ -31,7 +38,7 @@ impl Sets {
             sets.insert(name.to_string(), set);
         }
         let n = sets.len();
-        Self { n, sets }
+        Ok(Self { n, sets })
     }
 
     pub fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
