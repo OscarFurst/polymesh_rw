@@ -5,13 +5,19 @@ use nom::combinator::map;
 use nom::{character::complete::char, multi::count, IResult};
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct UniformData(FoamStructure);
+pub struct UniformData(pub FoamStructure);
 
 impl std::ops::Deref for UniformData {
     type Target = FoamStructure;
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl std::ops::DerefMut for UniformData {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 

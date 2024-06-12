@@ -10,7 +10,7 @@ pub struct TimeDir {
     pub time: f64,
     // Keys: variable names.
     pub field_values: HashMap<String, FileContent<ResultData>>,
-    pub uniform: Option<FileContent<UniformData>>,
+    pub uniform: Option<HashMap<String, FileContent<UniformData>>>,
 }
 
 impl TimeDir {
@@ -37,7 +37,30 @@ impl TimeDir {
             let result_data = FileContent::<ResultData>::parse_file(&path)?;
             field_values.insert(name, result_data);
         }
-        let uniform = FileContent::<UniformData>::parse_file(&path.join("uniform/time")).ok();
+        // check if there is a uniform directory
+        let uniform = if path.join("uniform").is_dir() {
+            let mut uniform = HashMap::new();
+            for entry in std::fs::read_dir(&path.join("uniform"))? {
+                let entry = entry?;
+                let path = entry.path();
+                if path.is_dir() {
+                    continue;
+                }
+                let name = path
+                    .file_name()
+                    .expect("Unable to extract file name while parsing uniform directory.")
+                    .to_str()
+                    .expect("File name in uniform directory is not valid unicode.")
+                    .to_string();
+                let mut uniform_data = FileContent::<UniformData>::parse_file(&path)?;
+                uniform_data.data.name = name.clone();
+                uniform.insert(name, uniform_data);
+            }
+            Some(uniform)
+        } else {
+            None
+        };
+
         Ok(TimeDir {
             time,
             field_values,
@@ -51,7 +74,9 @@ impl TimeDir {
             result.write_file(path)?;
         }
         if let Some(uniform) = &self.uniform {
-            uniform.write_file(path)?;
+            for uniform in uniform.values() {
+                uniform.write_file(path)?;
+            }
         }
         Ok(())
     }
