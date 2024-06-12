@@ -6,7 +6,6 @@ FoamFile
     object          U;
 }
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 dimensions      [0 1 -1 0 0 0 0];
 
@@ -2019,35 +2018,35 @@ internalField   nonuniform List<vector>
 boundaryField
 {
     down            
-    {
+{
     type            symmetryPlane;
-    }
+}
     right           
-    {
+{
     type            zeroGradient;
-    }
+}
     up              
-    {
+{
     type            symmetryPlane;
-    }
+}
     left            
-    {
+{
     type            uniformFixedValue;
     uniformValue    
-    {
+{
     type            constant;
     value           (1 0 0);
-    }
+}
     value           uniform (1 0 0);
-    }
+}
     cylinder        
-    {
+{
     type            symmetry;
-    }
+}
     defaultFaces    
-    {
+{
     type            empty;
-    }
+}
 }
 
 

@@ -1,3 +1,4 @@
+use super::parser_base::discard_garbage;
 use super::FileElement;
 use super::FileParser;
 use super::FoamFileData;
@@ -22,6 +23,7 @@ impl<T: FileParser> FileElement for FileContent<T> {
     fn parse(input: &str) -> IResult<&str, Self> {
         let (input, meta) = FoamFileData::parse(input)?;
         let (input, data) = T::parse(input)?;
+        let (input, _) = discard_garbage(input)?;
         Ok((
             input,
             FileContent {
@@ -38,8 +40,7 @@ impl<T: FileParser> std::fmt::Display for FileContent<T> {
         writeln!(f, "{}", self.meta)?;
         writeln!(
             f,
-            "
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //"
+            "// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //"
         )?;
         writeln!(f, "{}", self.data)
     }

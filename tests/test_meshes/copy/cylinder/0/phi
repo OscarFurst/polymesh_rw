@@ -6,7 +6,6 @@ FoamFile
     object          phi;
 }
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 dimensions      [0 3 -1 0 0 0 0];
 
@@ -3909,12 +3908,12 @@ internalField   nonuniform List<scalar>
 boundaryField
 {
     down            
-    {
+{
     type            symmetryPlane;
     value           uniform 0;
-    }
+}
     right           
-    {
+{
     type            calculated;
     value           nonuniform List<scalar> 
 30
@@ -3951,14 +3950,14 @@ boundaryField
 0.0679261
 )
 ;
-    }
+}
     up              
-    {
+{
     type            symmetryPlane;
     value           uniform 0;
-    }
+}
     left            
-    {
+{
     type            calculated;
     value           nonuniform List<scalar> 
 30
@@ -3995,17 +3994,17 @@ boundaryField
 -0.0646446
 )
 ;
-    }
+}
     cylinder        
-    {
+{
     type            symmetry;
     value           uniform 0;
-    }
+}
     defaultFaces    
-    {
+{
     type            empty;
     value           nonuniform List<scalar> 0();
-    }
+}
 }
 
 

@@ -12,6 +12,7 @@ pub mod pointzones;
 pub mod result;
 pub mod sets;
 pub mod timedir;
+pub mod uniform;
 
 // re-export the structures for easier access.
 pub use boundary::BoundaryData;

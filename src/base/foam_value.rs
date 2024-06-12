@@ -3,8 +3,11 @@ use super::foam_structure::FoamStructure;
 use super::parser_base::*;
 use super::writer_base::*;
 use super::FileElement;
+use indexmap::IndexMap;
 use nom::bytes::complete::tag;
 use nom::multi::count;
+use nom::multi::fold_many0;
+use nom::sequence::pair;
 use nom::sequence::preceded;
 use nom::{
     bytes::complete::take_till,
@@ -22,6 +25,27 @@ pub enum FoamValue {
     // TODO: Lists should be more generic.
     List(Vec<String>),
     Structure(FoamStructure),
+}
+
+impl FoamValue {
+    /// Parse a single key-value pair from the given input.
+    fn parse_pair(input: &str) -> IResult<&str, (String, FoamValue)> {
+        map(pair(next(string_val), lws(FoamValue::parse)), |(s, v)| {
+            if let FoamValue::Structure(mut structure) = v {
+                structure.name.clone_from(&s);
+                (s, FoamValue::Structure(structure))
+            } else {
+                (s, v)
+            }
+        })(input)
+    }
+
+    pub fn parse_map(input: &str) -> IResult<&str, IndexMap<String, FoamValue>> {
+        fold_many0(FoamValue::parse_pair, IndexMap::new, |mut map, (k, v)| {
+            map.insert(k, v);
+            map
+        })(input)
+    }
 }
 
 impl FileElement for FoamValue {
@@ -55,7 +79,7 @@ impl FileElement for FoamValue {
             return Ok((input, FoamValue::List(value)));
         }
         // Check if it is a structure.
-        if let Ok((input, value)) = FoamStructure::parse_content(input) {
+        if let Ok((input, value)) = FoamStructure::parse_block(input) {
             return Ok((input, FoamValue::Structure(value)));
         }
         // If none of the above, it is a string or something that is not implemented yet.

@@ -29,7 +29,7 @@ impl FileElement for FoamStructure {
     /// Parse a FoamStructure from the given input.
     fn parse(input: &str) -> IResult<&str, FoamStructure> {
         let (input, name) = next(string_val)(input)?;
-        let (input, structure) = FoamStructure::parse_content(input)?;
+        let (input, structure) = FoamStructure::parse_block(input)?;
         Ok((
             input,
             FoamStructure {
@@ -44,60 +44,38 @@ impl std::fmt::Display for FoamStructure {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         writeln!(f, "{}", self.name)?;
         writeln!(f, "{{")?;
-        for (key, value) in &self.content {
-            write!(f, "    {: <15} ", key)?;
-            write!(f, "{}", value)?;
-        }
+        self.display_content(f)?;
         writeln!(f, "}}")
     }
 }
 
 impl FoamStructure {
-    pub fn parse_content(input: &str) -> IResult<&str, FoamStructure> {
-        let (input, content) = delimited(
-            next(char('{')),
-            fold_many0(
-                FoamStructure::parse_pair,
-                IndexMap::new,
-                |mut map, (k, v)| {
-                    map.insert(k, v);
-                    map
-                },
-            ),
-            next(char('}')),
-        )(input)?;
-        Ok((
-            input,
-            FoamStructure {
+    pub fn parse_block(input: &str) -> IResult<&str, FoamStructure> {
+        map(
+            delimited(next(char('{')), FoamValue::parse_map, next(char('}'))),
+            |content| FoamStructure {
                 name: "".to_string(),
                 content,
             },
-        ))
+        )(input)
     }
 
-    /// Parse a single key-value pair from the given input.
-    fn parse_pair(input: &str) -> IResult<&str, (String, FoamValue)> {
-        map(pair(next(string_val), lws(FoamValue::parse)), |(s, v)| {
-            if let FoamValue::Structure(mut structure) = v {
-                structure.name.clone_from(&s);
-                (s, FoamValue::Structure(structure))
-            } else {
-                (s, v)
-            }
-        })(input)
+    pub fn display_content(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        for (key, value) in &self.content {
+            write!(f, "    {: <15} ", key)?;
+            write!(f, "{}", value)?;
+        }
+        Ok(())
     }
 
     // TODO: clean up write and write_recursive
 
     /// Write the structure to the given file, but without the name.
     /// This is used for recursive writing of structures.
-    pub fn write_recursive(&self, file: &mut std::fmt::Formatter) -> std::fmt::Result {
-        writeln!(file, "\n    {{")?;
-        for (key, value) in &self.content {
-            write!(file, "    {: <15} ", key)?;
-            write!(file, "{}", value)?;
-        }
-        writeln!(file, "    }}")?;
+    pub fn write_recursive(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        writeln!(f, "\n{{")?;
+        self.display_content(f)?;
+        writeln!(f, "}}")?;
         Ok(())
     }
 

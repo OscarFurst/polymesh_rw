@@ -5,7 +5,6 @@ FoamFile
     object          U;
 }
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 dimensions      [0 1 -1 0 0 0 0];
 
@@ -14,30 +13,30 @@ internalField   uniform (0 0 0);
 boundaryField
 {
     down            
-    {
+{
     type            symmetryPlane;
-    }
+}
     right           
-    {
+{
     type            zeroGradient;
-    }
+}
     up              
-    {
+{
     type            symmetryPlane;
-    }
+}
     left            
-    {
+{
     type            uniformFixedValue;
     uniformValue    constant (1 0 0);
-    }
+}
     cylinder        
-    {
+{
     type            symmetry;
-    }
+}
     defaultFaces    
-    {
+{
     type            empty;
-    }
+}
 }
 
 

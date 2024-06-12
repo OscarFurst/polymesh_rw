@@ -1,4 +1,7 @@
-use super::{FileContent, ResultData};
+use super::{
+    uniform::{self, UniformData},
+    FileContent, ResultData,
+};
 use std::collections::HashMap;
 
 /// The structure that holds the full content of a time directory, which is where simulation results are stored.
@@ -7,7 +10,7 @@ pub struct TimeDir {
     pub time: f64,
     // Keys: variable names.
     pub field_values: HashMap<String, FileContent<ResultData>>,
-    // TODO : missing the "uniform" directory
+    pub uniform: Option<FileContent<UniformData>>,
 }
 
 impl TimeDir {
@@ -18,7 +21,6 @@ impl TimeDir {
                 "Time directory name is not a valid number.",
             ));
         };
-        // TODO : parse "uniform" directory
         let mut field_values = HashMap::new();
         for entry in std::fs::read_dir(path)? {
             let entry = entry?;
@@ -35,13 +37,21 @@ impl TimeDir {
             let result_data = FileContent::<ResultData>::parse_file(&path)?;
             field_values.insert(name, result_data);
         }
-        Ok(TimeDir { time, field_values })
+        let uniform = FileContent::<UniformData>::parse_file(&path.join("uniform/time")).ok();
+        Ok(TimeDir {
+            time,
+            field_values,
+            uniform,
+        })
     }
 
     /// path: the path to the case directory.
     pub fn write(&self, path: &std::path::Path) -> std::io::Result<()> {
         for result in self.field_values.values() {
             result.write_file(path)?;
+        }
+        if let Some(uniform) = &self.uniform {
+            uniform.write_file(path)?;
         }
         Ok(())
     }
