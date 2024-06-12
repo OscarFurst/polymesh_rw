@@ -1,48 +1,45 @@
-use crate::file_parser::FileParser;
-use crate::foam_structure;
-use crate::parser_base::*;
+use crate::base::{parser_base::*, FileElement};
+use crate::base::{FileParser, FoamStructure};
 use indexmap::map::IndexMap;
 use nom::{character::complete::char, multi::count, IResult};
-use std::fmt;
-use std::io::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BoundaryData {
     pub n: usize,
-    pub boundaries: IndexMap<String, Boundary>,
+    pub boundaries: IndexMap<String, FoamStructure>,
 }
 
-type Boundary = foam_structure::FoamStructure;
-
 impl FileParser for BoundaryData {
-    /// Assumes the remaining input contains the data.
-    fn parse_data(input: &str) -> IResult<&str, BoundaryData> {
+    fn default_file_path() -> std::path::PathBuf {
+        std::path::PathBuf::from("constant/polyMesh/boundary")
+    }
+}
+
+impl FileElement for BoundaryData {
+    fn parse(input: &str) -> IResult<&str, BoundaryData> {
         // number of boundaries
         let (input, n) = next(usize_val)(input)?;
         // opening parenthesis
         let (input, _) = next(char('('))(input)?;
         // parse boundaries
-        let (input, boundary_vector) = count(Boundary::parse, n)(input)?;
-        let mut boundaries = IndexMap::new();
-        for boundary in &boundary_vector {
-            boundaries.insert(boundary.name.clone(), boundary.clone());
-        }
+        let (input, boundary_vector) = count(FoamStructure::parse, n)(input)?;
+        let boundaries = boundary_vector
+            .into_iter()
+            .map(|boundary| (boundary.name.clone(), boundary))
+            .collect();
         // closing parenthesis
         let (input, _) = next(char(')'))(input)?;
         Ok((input, BoundaryData { n, boundaries }))
     }
+}
 
-    fn default_file_path(&self) -> std::path::PathBuf {
-        std::path::PathBuf::from("constant/polyMesh/boundary")
-    }
-
-    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
-        writeln!(file, "{}", self.n)?;
-        writeln!(file, "(")?;
+impl std::fmt::Display for BoundaryData {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        writeln!(f, "{}", self.n)?;
+        writeln!(f, "(")?;
         for boundary in self.boundaries.values() {
-            boundary.write(file)?;
+            write!(f, "{}", boundary)?;
         }
-        writeln!(file, ")")?;
-        Ok(())
+        writeln!(f, ")")
     }
 }

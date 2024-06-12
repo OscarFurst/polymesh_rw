@@ -5,6 +5,9 @@ FoamFile
     location        "0";
     object          U;
 }
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 dimensions      [0 1 -1 0 0 0 0];
 
 internalField   nonuniform List<vector>
@@ -2012,6 +2015,7 @@ internalField   nonuniform List<vector>
 (1.16089 0.000262656 0.00000000000000000000000095461)
 )
 ;
+
 boundaryField
 {
     down            
@@ -2045,3 +2049,5 @@ boundaryField
     type            empty;
     }
 }
+
+

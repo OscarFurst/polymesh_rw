@@ -5,6 +5,9 @@ FoamFile
     location        "constant/polyMesh";
     object          cellZones;
 }
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 2
 (
 channel
@@ -190,6 +193,7 @@ cellLabels      List<label>
 )
 ;
 }
+
 
 metal
 {
@@ -619,4 +623,6 @@ cellLabels      List<label>
 ;
 }
 
+
 )
+

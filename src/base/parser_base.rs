@@ -1,8 +1,8 @@
 use nom::{
     branch::alt,
-    bytes::complete::{is_not, tag, take_until, take_while, take_while1},
+    bytes::complete::{is_not, tag, take_until, take_while1},
     character::complete::{char, digit0, digit1, multispace0, multispace1},
-    combinator::{map, map_res, value},
+    combinator::{map, map_res, opt, recognize, value},
     multi::{count, many0, many1},
     number::complete::double,
     sequence::{delimited, pair, preceded, terminated, tuple},
@@ -32,27 +32,27 @@ where
 
 /// A combinator that takes a parser `inner` and produces a parser that also consumes both leading and
 /// trailing parentheses on the same line, returning the output of `inner`.
-pub fn inline_parentheses<'a, F: 'a, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
+pub fn inline_parentheses<'a, F, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
 where
-    F: Fn(&'a str) -> IResult<&'a str, O>,
+    F: Fn(&'a str) -> IResult<&'a str, O> + 'a,
 {
     delimited(char('('), inner, char(')'))
 }
 
 /// A combinator that takes a parser `inner` and produces a parser that also consumes both leading and
 /// trailing parentheses, even when on their own lines, returning the output of `inner`.
-pub fn block_parentheses<'a, F: 'a, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
+pub fn block_parentheses<'a, F, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
 where
-    F: FnMut(&'a str) -> IResult<&'a str, O>,
+    F: FnMut(&'a str) -> IResult<&'a str, O> + 'a,
 {
     delimited(next(char('(')), inner, next(char(')')))
 }
 
 /// A combinator that takes a parser `inner` and produces a parser that also consumes all leading
 /// whitespaces and comments.
-pub fn next<'a, F: 'a, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
+pub fn next<'a, F, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
 where
-    F: Fn(&'a str) -> IResult<&'a str, O>,
+    F: Fn(&'a str) -> IResult<&'a str, O> + 'a,
 {
     preceded(discard_garbage, inner)
 }
@@ -77,6 +77,14 @@ pub fn usize_val(input: &str) -> IResult<&str, usize> {
     map_res(digit1, str::parse)(input)
 }
 
+/// A parser that consumes a positive or negative integer and returns it as a `f64`.
+pub fn i32_val(input: &str) -> IResult<&str, i32> {
+    map_res(
+        recognize(preceded(opt(char('-')), digit1)),
+        str::parse::<i32>,
+    )(input)
+}
+
 /// A parser that consumes a "boolean" 0 or 1 and returns it as a `bool`.
 pub fn bool(input: &str) -> IResult<&str, bool> {
     map(alt((char('0'), char('1'))), |x| x == '1')(input)
@@ -88,19 +96,22 @@ pub fn semicolon(input: &str) -> IResult<&str, char> {
 }
 
 /// Aggregate parsers
-
+#[allow(dead_code)]
 pub fn key_string<'a>(name: &str) -> impl Fn(&'a str) -> IResult<&str, String> + '_ {
     move |i: &'a str| preceded(tag(name), lws(string_val))(i)
 }
 
+#[allow(dead_code)]
 pub fn key_string_semicolon<'a>(name: &str) -> impl Fn(&'a str) -> IResult<&str, String> + '_ {
     move |i: &'a str| terminated(key_string(name), semicolon)(i)
 }
 
+#[allow(dead_code)]
 pub fn key_usize<'a>(name: &str) -> impl Fn(&'a str) -> IResult<&str, usize> + '_ {
     move |i: &'a str| preceded(tag(name), lws(usize_val))(i)
 }
 
+#[allow(dead_code)]
 pub fn key_usize_semicolon<'a>(name: &str) -> impl Fn(&'a str) -> IResult<&str, usize> + '_ {
     move |i: &'a str| terminated(key_usize(name), semicolon)(i)
 }
@@ -164,7 +175,7 @@ pub fn discard_line_comment(input: &str) -> IResult<&str, ()> {
     value((), pair(tag("//"), is_not("\n\r")))(input)
 }
 
-pub fn discard_multiline_comment<'a>(i: &'a str) -> IResult<&'a str, ()> {
+pub fn discard_multiline_comment(i: &str) -> IResult<&str, ()> {
     value(
         (), // Output is thrown away.
         tuple((tag("/*"), take_until("*/"), tag("*/"))),

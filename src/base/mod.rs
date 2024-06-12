@@ -1,10 +1,25 @@
-use crate::foam_structure::FoamStructure;
+mod file_content;
+/// The base module contains the basic building blocks for parsing and writing OpenFOAM files.
+mod file_parser;
+mod foam_field;
+mod foam_structure;
+mod foam_value;
+pub(crate) mod parser_base;
+pub(crate) mod writer_base;
 
-pub type FoamFileData = FoamStructure;
+// Re-export the modules for easier access.
+pub use file_content::FileContent;
+pub use file_parser::FileElement;
+pub use file_parser::FileParser;
+pub use foam_field::FoamField;
+pub use foam_structure::FoamStructure;
+pub use foam_value::FoamValue;
+
+pub type FoamFileData = foam_structure::FoamStructure;
 
 #[cfg(test)]
 mod tests {
-    use crate::foam_structure::FoamValue;
+    use crate::base::foam_value::FoamValue;
     use indexmap::map::IndexMap;
 
     use super::*;
@@ -47,7 +62,8 @@ FoamFile
 
     #[test]
     fn test_parse_header() {
-        let input = r#"/*--------------------------------*- C++ -*----------------------------------*\
+        let input = r#"
+/*--------------------------------*- C++ -*----------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org

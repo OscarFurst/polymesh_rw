@@ -1,4 +1,4 @@
-use polymesh_rw::polymesh::Case;
+use polymesh_rw::Case;
 
 #[test]
 fn test_consistency() {

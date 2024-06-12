@@ -5,6 +5,9 @@ FoamFile
     location        "constant/polyMesh";
     object          boundary;
 }
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 8
 (
 inlet
@@ -64,3 +67,4 @@ bottom
     startFace       1352;
 }
 )
+

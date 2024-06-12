@@ -1,9 +1,7 @@
-use std::io::prelude::*;
-
 pub fn write_single_data<T: std::fmt::Display>(
     data: &[T],
-    file: &mut std::fs::File,
-) -> std::io::Result<()> {
+    file: &mut std::fmt::Formatter,
+) -> std::fmt::Result {
     writeln!(file, "{}", data.len())?;
     writeln!(file, "(")?;
     for d in data {
@@ -16,8 +14,8 @@ pub fn write_single_data<T: std::fmt::Display>(
 /// Writes a vector of data to a file as a space-separated list.
 pub fn write_vector_content<T: std::fmt::Display>(
     data: &[T],
-    file: &mut std::fs::File,
-) -> std::io::Result<()> {
+    file: &mut std::fmt::Formatter,
+) -> std::fmt::Result {
     let mut first = true;
     for d in data {
         if first {
@@ -42,8 +40,8 @@ pub fn write_vector_content<T: std::fmt::Display>(
 /// ```
 pub fn write_multi_data<T: std::fmt::Display>(
     data: &[Vec<T>],
-    file: &mut std::fs::File,
-) -> std::io::Result<()> {
+    file: &mut std::fmt::Formatter,
+) -> std::fmt::Result {
     writeln!(file, "{}", data.len())?;
     writeln!(file, "(")?;
     for d in data {
@@ -75,7 +73,7 @@ pub fn write_multi_data<T: std::fmt::Display>(
 /// (10 11 12)
 /// )
 /// ```
-pub fn write_fixed_witdh_data<T, I>(data: &[I], file: &mut std::fs::File) -> std::io::Result<()>
+pub fn write_fixed_witdh_data<T, I>(data: &[I], file: &mut std::fmt::Formatter) -> std::fmt::Result
 where
     T: std::fmt::Display,
     for<'b> &'b I: IntoIterator<Item = &'b T>,

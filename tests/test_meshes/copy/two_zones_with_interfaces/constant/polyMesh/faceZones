@@ -5,6 +5,9 @@ FoamFile
     location        "constant/polyMesh";
     object          faceZones;
 }
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 1
 (
 interface
@@ -54,4 +57,6 @@ faceLabels      List<label>
 flipMap         List<bool> 36{1};
 }
 
+
 )
+

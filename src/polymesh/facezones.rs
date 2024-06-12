@@ -1,17 +1,58 @@
-use crate::file_parser::FileParser;
-use crate::parser_base::*;
-use crate::writer_base::{bool_as_num, write_single_data};
+use crate::base::parser_base::*;
+use crate::base::writer_base::*;
+use crate::base::FileElement;
+use crate::base::FileParser;
 use indexmap::map::IndexMap;
 use nom::{
     bytes::complete::tag, character::complete::char, multi::count, sequence::delimited, IResult,
 };
-use std::io::prelude::*;
 
-/// Container for the polyMesh faceZones data.
+pub trait Zone: FileElement {
+    fn name(&self) -> &str;
+    fn default_file_path() -> std::path::PathBuf;
+}
+
+/// Container for the polyMesh Zones data, e.g. cellZones, faceZones and pointZones.
 #[derive(Debug, PartialEq, Clone)]
-pub struct FaceZoneData {
+pub struct ZoneData<T: Zone> {
     pub n: usize,
-    pub facezones: IndexMap<String, FaceZone>,
+    pub zones: IndexMap<String, T>,
+}
+
+impl<T: Zone> FileParser for ZoneData<T> {
+    fn default_file_path() -> std::path::PathBuf {
+        T::default_file_path()
+    }
+}
+
+impl<T: Zone> FileElement for ZoneData<T> {
+    fn parse(input: &str) -> IResult<&str, ZoneData<T>> {
+        // number of face zones
+        let (input, n) = next(usize_val)(input)?;
+        // opening parenthesis
+        let (input, _) = next(char('('))(input)?;
+        // parse face zones
+        let (input, facezone_vector) = count(T::parse, n)(input)?;
+        let zones = facezone_vector
+            .into_iter()
+            .map(|facezone| (facezone.name().to_string(), facezone))
+            .collect();
+        // closing parenthesis
+        let (input, _) = next(char(')'))(input)?;
+        Ok((input, ZoneData { n, zones }))
+    }
+}
+
+impl<T: Zone> std::fmt::Display for ZoneData<T> {
+    fn fmt(&self, file: &mut std::fmt::Formatter) -> std::fmt::Result {
+        writeln!(file, "{}", self.n)?;
+        writeln!(file, "(")?;
+        for zone in self.zones.values() {
+            writeln!(file, "{}", zone)?;
+        }
+        writeln!(file, ")")?;
+        Ok(())
+    }
 }
 
 /// Container for the data of a single faceZone.
@@ -26,20 +67,66 @@ pub struct FaceZone {
     pub flipmap: bool,
 }
 
-impl FaceZone {
-    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
-        writeln!(file, "{}", self.name)?;
-        writeln!(file, "{{")?;
-        writeln!(file, "    type faceZone;")?;
-        writeln!(file, "faceLabels      List<label>  ")?;
-        write_single_data(&self.faces, file)?;
-        writeln!(file, ";")?;
-        self.write_flipmap(file)?;
-        writeln!(file, "}}\n")?;
-        Ok(())
+impl Zone for FaceZone {
+    fn name(&self) -> &str {
+        &self.name
     }
 
-    fn write_flipmap(&self, file: &mut std::fs::File) -> std::io::Result<()> {
+    fn default_file_path() -> std::path::PathBuf {
+        std::path::PathBuf::from("constant/polyMesh/faceZones")
+    }
+}
+
+impl FileElement for FaceZone {
+    fn parse(input: &str) -> IResult<&str, FaceZone> {
+        // starts with name
+        let (input, name) = next(string_val)(input)?;
+        // opening curly brace
+        let (input, _) = next(char('{'))(input)?;
+        // "    type faceZone;"
+        let (input, _) = next(known_key_value_semicolon("type", "faceZone"))(input)?;
+        // "faceLabels      List<label> "
+        let (input, _) = next(known_key_value("faceLabels", "List<label>"))(input)?;
+        // list of faces
+        let (input, faces) = single_i_data(input)?;
+        let n = faces.len();
+        // closing semicolon
+        let (input, _) = next(semicolon)(input)?;
+        // "flipMap         List<bool>"
+        let (input, _) = next(known_key_value("flipMap", "List<bool>"))(input)?;
+        let (input, _) = discard_empty(input)?;
+        // on the same line: <number of faces>{<bool>};
+        let (input, flipmap) = Self::parse_flipmap(input, n)?;
+        // closing curly brace
+        let (input, _) = next(char('}'))(input)?;
+        Ok((
+            input,
+            FaceZone {
+                name,
+                n,
+                faces,
+                flipmap,
+            },
+        ))
+    }
+}
+
+impl std::fmt::Display for FaceZone {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        writeln!(f, "{}", self.name)?;
+        writeln!(f, "{{")?;
+        writeln!(f, "    type faceZone;")?;
+        writeln!(f, "faceLabels      List<label>  ")?;
+        write_single_data(&self.faces, f)?;
+        writeln!(f, ";")?;
+        self.write_flipmap(f)?;
+        writeln!(f, "}}\n")?;
+        Ok(())
+    }
+}
+
+impl FaceZone {
+    fn write_flipmap(&self, file: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(file, "flipMap         List<bool> ")?;
         write!(file, "{}", self.n)?;
         write!(file, "{{")?;
@@ -47,77 +134,12 @@ impl FaceZone {
         writeln!(file, "}};")?;
         Ok(())
     }
-}
 
-fn parse_flipmap(input: &str, n: usize) -> IResult<&str, bool> {
-    delimited(
-        tag(n.to_string().as_str()),
-        delimited(char('{'), bool, char('}')),
-        semicolon,
-    )(input)
-}
-
-fn parse_face_zone(input: &str) -> IResult<&str, FaceZone> {
-    // starts with name
-    let (input, name) = next(string_val)(input)?;
-    // opening curly brace
-    let (input, _) = next(char('{'))(input)?;
-    // "    type faceZone;"
-    let (input, _) = next(known_key_value_semicolon("type", "faceZone"))(input)?;
-    // "faceLabels      List<label> "
-    let (input, _) = next(known_key_value("faceLabels", "List<label>"))(input)?;
-    // list of faces
-    let (input, faces) = single_i_data(input)?;
-    let n = faces.len();
-    // closing semicolon
-    let (input, _) = next(semicolon)(input)?;
-    // "flipMap         List<bool>"
-    let (input, _) = next(known_key_value("flipMap", "List<bool>"))(input)?;
-    let (input, _) = discard_empty(input)?;
-    // on the same line: <number of faces>{<bool>};
-    let (input, flipmap) = parse_flipmap(input, n)?;
-    // closing curly brace
-    let (input, _) = next(char('}'))(input)?;
-    Ok((
-        input,
-        FaceZone {
-            name,
-            n,
-            faces,
-            flipmap,
-        },
-    ))
-}
-
-impl FileParser for FaceZoneData {
-    /// Assumes the remaining input contains the facezone data.
-    fn parse_data(input: &str) -> IResult<&str, FaceZoneData> {
-        // number of face zones
-        let (input, n) = next(usize_val)(input)?;
-        // opening parenthesis
-        let (input, _) = next(char('('))(input)?;
-        // parse face zones
-        let (input, facezone_vector) = count(parse_face_zone, n)(input)?;
-        let facezones = facezone_vector
-            .into_iter()
-            .map(|facezone| (facezone.name.clone(), facezone))
-            .collect();
-        // closing parenthesis
-        let (input, _) = next(char(')'))(input)?;
-        Ok((input, FaceZoneData { n, facezones }))
-    }
-
-    fn default_file_path(&self) -> std::path::PathBuf {
-        std::path::PathBuf::from("constant/polyMesh/faceZones")
-    }
-
-    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
-        writeln!(file, "{}", self.n)?;
-        writeln!(file, "(")?;
-        for (_, facezone) in &self.facezones {
-            facezone.write_data(file)?;
-        }
-        writeln!(file, ")")?;
-        Ok(())
+    fn parse_flipmap(input: &str, n: usize) -> IResult<&str, bool> {
+        delimited(
+            tag(n.to_string().as_str()),
+            delimited(char('{'), bool, char('}')),
+            semicolon,
+        )(input)
     }
 }

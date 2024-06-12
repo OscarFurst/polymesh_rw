@@ -1,6 +1,7 @@
-use crate::file_parser::FileParser;
-use crate::parser_base::*;
-use crate::writer_base::write_fixed_witdh_data;
+use crate::base::parser_base::*;
+use crate::base::writer_base::*;
+use crate::base::FileElement;
+use crate::base::FileParser;
 use nom::{
     bytes::complete::tag, character::complete::digit1, combinator::map, multi::count,
     number::complete::double, IResult,
@@ -14,6 +15,12 @@ pub struct PointData {
     pub points: Vec<Point>,
 }
 
+impl FileParser for PointData {
+    fn default_file_path() -> std::path::PathBuf {
+        std::path::PathBuf::from("constant/polyMesh/points")
+    }
+}
+
 fn point_coordinates(input: &str) -> IResult<&str, Point> {
     map(count(ws(double), 3), |v| [v[0], v[1], v[2]])(input)
 }
@@ -21,9 +28,9 @@ fn point(input: &str) -> IResult<&str, Point> {
     inline_parentheses(point_coordinates)(input)
 }
 
-impl FileParser for PointData {
+impl FileElement for PointData {
     /// Assumes the remaining input contains the point data.
-    fn parse_data(input: &str) -> IResult<&str, PointData> {
+    fn parse(input: &str) -> IResult<&str, PointData> {
         // Parse the number of points.
         let (input, n) = next(digit1)(input)?;
         let n = n.parse().expect("Failed to parse number of points.");
@@ -36,12 +43,14 @@ impl FileParser for PointData {
         Ok((input, PointData { n, points }))
     }
 
-    fn default_file_path(&self) -> std::path::PathBuf {
-        std::path::PathBuf::from("constant/polyMesh/points")
-    }
+    // fn default_file_path(&self) -> std::path::PathBuf {
+    //     std::path::PathBuf::from("constant/polyMesh/points")
+    // }
+}
 
-    fn write_data(&self, file: &mut std::fs::File) -> std::io::Result<()> {
-        write_fixed_witdh_data(&self.points, file)
+impl std::fmt::Display for PointData {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write_fixed_witdh_data(&self.points, f)
     }
 }
 
@@ -67,7 +76,7 @@ mod tests {
                 [0.0, 1.0, 0.0],
             ],
         };
-        let (_, actual_value) = PointData::parse_data(input).unwrap();
+        let (_, actual_value) = PointData::parse(input).unwrap();
         assert_eq!(expected_value, actual_value);
     }
 }

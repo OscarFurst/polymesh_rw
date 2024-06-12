@@ -5,6 +5,9 @@ FoamFile
     location        "0";
     object          phi;
 }
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 dimensions      [0 3 -1 0 0 0 0];
 
 internalField   nonuniform List<scalar>
@@ -3902,6 +3905,7 @@ internalField   nonuniform List<scalar>
 0.0582048
 )
 ;
+
 boundaryField
 {
     down            
@@ -4003,3 +4007,5 @@ boundaryField
     value           nonuniform List<scalar> 0();
     }
 }
+
+

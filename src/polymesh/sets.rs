@@ -1,13 +1,14 @@
 use super::FileContent;
-use crate::file_parser::FileParser;
-use crate::parser_base::single_i_data;
-use crate::writer_base::write_single_data;
+use crate::base::parser_base::*;
+use crate::base::writer_base::*;
+use crate::base::FileElement;
+use crate::base::FileParser;
 use nom::IResult;
 use std::collections::HashMap;
-use std::error::Error;
 use std::fs;
 use std::path;
 
+/// The Sets structure holds the full content of the "sets" directory.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Sets {
     pub n: usize,
@@ -15,8 +16,9 @@ pub struct Sets {
 }
 
 impl Sets {
+    /// Parses the "sets" directory and returns a Sets structure.
     /// path is the path to the "sets" directory.
-    pub fn parse(path: &path::Path) -> std::io::Result<Self> {
+    pub fn parse_files(path: &path::Path) -> std::io::Result<Self> {
         // check if the directory exists
         if !path.is_dir() {
             return Err(std::io::Error::new(
@@ -30,10 +32,9 @@ impl Sets {
             let file = file.unwrap();
             let path = file.path();
             let name = path.file_name().unwrap().to_str().unwrap();
-            let mut set =
-                Set::parse(&path).expect(format!("Failed to parse set file {:?}.", path).as_str());
-            // the name is provided afterwards because it is not stored in the data,
-            // and its is required for the file_path method
+            let mut set = FileContent::<Set>::parse_file(&path)
+                .unwrap_or_else(|_| panic!("Failed to parse set file {:?}.", path));
+            // the name is provided afterwards because it is not stored in the data
             set.data.name = name.to_string();
             sets.insert(name.to_string(), set);
         }
@@ -41,11 +42,17 @@ impl Sets {
         Ok(Self { n, sets })
     }
 
+    /// Writes the complete "sets" directory to the provided path.
     pub fn write(&self, path: &path::Path) -> std::io::Result<()> {
         for set in self.sets.values() {
-            set.write(path)?;
+            set.write_file(path)?;
         }
         Ok(())
+    }
+
+    /// Returns the default path from the case directory to the "sets" directory.
+    pub fn default_file_path(&self) -> path::PathBuf {
+        std::path::PathBuf::from("constant/polyMesh/sets")
     }
 }
 
@@ -57,19 +64,22 @@ pub struct Set {
 }
 
 impl FileParser for Set {
-    /// Assumes the remaining input contains the set data.
-    fn parse_data(input: &str) -> IResult<&str, Set> {
+    fn default_file_path() -> std::path::PathBuf {
+        std::path::PathBuf::from("constant/polyMesh/undefinedSetName")
+    }
+}
+
+impl FileElement for Set {
+    fn parse(input: &str) -> IResult<&str, Set> {
         let (input, labels) = single_i_data(input)?;
         let n = labels.len();
         let name = "uninitialized".to_string();
         Ok((input, Set { name, n, labels }))
     }
+}
 
-    fn default_file_path(&self) -> path::PathBuf {
-        path::PathBuf::from(format!("constant/polyMesh/sets/{}", self.name))
-    }
-
-    fn write_data(&self, file: &mut fs::File) -> std::io::Result<()> {
-        write_single_data(&self.labels, file)
+impl std::fmt::Display for Set {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write_single_data(&self.labels, f)
     }
 }

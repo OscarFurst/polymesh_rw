@@ -5,6 +5,9 @@ FoamFile
     location        "constant/polyMesh/sets";
     object          channel;
 }
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 174
 (
 0
@@ -182,3 +185,4 @@ FoamFile
 172
 173
 )
+

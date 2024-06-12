@@ -1,7 +1,4 @@
-use crate::file_parser::FileParser;
-use crate::foam_file::FoamFileData;
-use std::collections::HashMap;
-use std::error::Error;
+use crate::base::FileContent;
 use std::path;
 
 pub mod boundary;
@@ -12,118 +9,25 @@ pub mod neighbour;
 pub mod owner;
 pub mod points;
 pub mod pointzones;
+pub mod result;
 pub mod sets;
 pub mod timedir;
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct Case {
-    pub poly_mesh: PolyMesh,
-    pub time_directories: HashMap<String, TimeDir>,
-}
+// re-export the structures for easier access.
+pub use boundary::BoundaryData;
+pub use cellzones::CellZone;
+pub use faces::FaceData;
+pub use facezones::FaceZone;
+pub use facezones::ZoneData;
+pub use neighbour::NeighbourData;
+pub use owner::OwnerData;
+pub use points::PointData;
+pub use pointzones::PointZone;
+pub use result::ResultData;
+pub use sets::Sets;
+pub use timedir::TimeDir;
 
-impl Case {
-    /// Parses the case directory and returns a Case struct.
-    pub fn parse(dir_path: &path::Path) -> Result<Case, Box<dyn Error>> {
-        let poly_mesh = PolyMesh::parse(&dir_path.join("constant/polyMesh"))?;
-        let mut time_directories = HashMap::new();
-        for entry in std::fs::read_dir(dir_path)? {
-            let entry = entry?;
-            let path = entry.path();
-            if !path.is_dir() {
-                continue;
-            }
-            // Check if the directory name is a number.
-            let dir_name = path.file_name().unwrap().to_str().unwrap();
-            if let Ok(_time) = dir_name.parse::<f64>() {
-                let name = dir_name.to_string();
-                let time_directory = TimeDir::parse(&path)?;
-                time_directories.insert(name, time_directory);
-            }
-        }
-        Ok(Case {
-            poly_mesh,
-            time_directories,
-        })
-    }
-
-    /// Writes the case contents to the given directory.
-    pub fn write(&self, path: &path::Path) -> std::io::Result<()> {
-        self.poly_mesh.write(path)?;
-        for (_, time_directory) in &self.time_directories {
-            time_directory.write(&path)?;
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct FileContent<T: FileParser> {
-    pub location: Option<path::PathBuf>,
-    pub meta: FoamFileData,
-    pub data: T,
-}
-impl<T: FileParser> FileContent<T> {
-    /// Write the file to the given case directory.
-    fn write(&self, path: &path::Path) -> std::io::Result<()> {
-        let relative_path = match self.location {
-            Some(ref p) => p.to_owned(),
-            // TODO: This will have to change as soon as mets does not always contain the location.
-            None => match self.meta.relative_file_path() {
-                Some(p) => p,
-                None => self.data.default_file_path(),
-            },
-        };
-        let full_path = path.join(relative_path);
-        if let Some(p) = full_path.parent() {
-            std::fs::create_dir_all(p)?;
-        }
-        let mut file = std::fs::File::create(full_path)?;
-        self.meta.write(&mut file)?;
-        self.data.write_data(&mut file)?;
-        Ok(())
-    }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct TimeDir {
-    pub time: f64,
-    // Keys: variable names.
-    pub field_values: HashMap<String, FileContent<timedir::ResultData>>,
-    // TODO : missing the "uniform" directory
-}
-
-impl TimeDir {
-    pub fn parse(path: &path::Path) -> Result<TimeDir, Box<dyn Error>> {
-        let time = path.file_name().unwrap().to_str().unwrap().parse::<f64>()?;
-        // TODO : parse "uniform" directory
-        let mut field_values = HashMap::new();
-        for entry in std::fs::read_dir(path)? {
-            let entry = entry?;
-            let path = entry.path();
-            if path.is_dir() {
-                continue;
-            }
-            let name = path
-                .file_name()
-                .expect("Unable to extract file name while parsing time directory.")
-                .to_str()
-                .expect("File name in time directory is not valid unicode.")
-                .to_string();
-            let result_data = timedir::ResultData::parse(&path)?;
-            field_values.insert(name, result_data);
-        }
-        Ok(TimeDir { time, field_values })
-    }
-
-    /// path: the path to the case directory.
-    pub fn write(&self, path: &path::Path) -> std::io::Result<()> {
-        for (_, result) in &self.field_values {
-            result.write(&path)?;
-        }
-        Ok(())
-    }
-}
-
+/// The PolyMesh structure holds all the data of a polyMesh directory.
 #[derive(Debug, PartialEq, Clone)]
 pub struct PolyMesh {
     pub points: FileContent<points::PointData>,
@@ -131,23 +35,26 @@ pub struct PolyMesh {
     pub owner: FileContent<owner::OwnerData>,
     pub neighbour: FileContent<neighbour::NeighbourData>,
     pub boundary: FileContent<boundary::BoundaryData>,
-    pub facezones: Option<FileContent<facezones::FaceZoneData>>,
-    pub cellzones: Option<FileContent<cellzones::CellZoneData>>,
-    pub pointzones: Option<FileContent<pointzones::PointZoneData>>,
+    pub facezones: Option<FileContent<ZoneData<FaceZone>>>,
+    pub cellzones: Option<FileContent<ZoneData<CellZone>>>,
+    pub pointzones: Option<FileContent<ZoneData<PointZone>>>,
     pub sets: Option<sets::Sets>,
 }
 
 impl PolyMesh {
-    pub fn parse(dir_path: &path::Path) -> Result<PolyMesh, Box<dyn Error>> {
-        let points = points::PointData::parse(&dir_path.join("points"))?;
-        let faces = faces::FaceData::parse(&dir_path.join("faces"))?;
-        let owner = owner::OwnerData::parse(&dir_path.join("owner"))?;
-        let neighbour = neighbour::NeighbourData::parse(&dir_path.join("neighbour"))?;
-        let boundary = boundary::BoundaryData::parse(&dir_path.join("boundary"))?;
-        let facezones = facezones::FaceZoneData::parse(&dir_path.join("faceZones")).ok();
-        let cellzones = cellzones::CellZoneData::parse(&dir_path.join("cellZones")).ok();
-        let pointzones = pointzones::PointZoneData::parse(&dir_path.join("pointZones")).ok();
-        let sets = sets::Sets::parse(&dir_path.join("sets")).ok();
+    pub fn parse(dir_path: &path::Path) -> std::io::Result<PolyMesh> {
+        let points = FileContent::<PointData>::parse_file(&dir_path.join("points"))?;
+        let faces = FileContent::<FaceData>::parse_file(&dir_path.join("faces"))?;
+        let owner = FileContent::<OwnerData>::parse_file(&dir_path.join("owner"))?;
+        let neighbour = FileContent::<NeighbourData>::parse_file(&dir_path.join("neighbour"))?;
+        let boundary = FileContent::<BoundaryData>::parse_file(&dir_path.join("boundary"))?;
+        let facezones =
+            FileContent::<ZoneData<FaceZone>>::parse_file(&dir_path.join("faceZones")).ok();
+        let cellzones =
+            FileContent::<ZoneData<CellZone>>::parse_file(&dir_path.join("cellZones")).ok();
+        let pointzones =
+            FileContent::<ZoneData<PointZone>>::parse_file(&dir_path.join("pointZones")).ok();
+        let sets = sets::Sets::parse_files(&dir_path.join("sets")).ok();
         Ok(PolyMesh {
             points,
             faces,
@@ -161,46 +68,20 @@ impl PolyMesh {
         })
     }
 
-    pub fn parse_and_assert(dir_path: &path::Path) -> PolyMesh {
-        let points = points::PointData::parse_and_assert(&dir_path.join("points")).unwrap();
-        let faces = faces::FaceData::parse_and_assert(&dir_path.join("faces")).unwrap();
-        let owner = owner::OwnerData::parse_and_assert(&dir_path.join("owner")).unwrap();
-        let neighbour =
-            neighbour::NeighbourData::parse_and_assert(&dir_path.join("neighbour")).unwrap();
-        let boundary =
-            boundary::BoundaryData::parse_and_assert(&dir_path.join("boundary")).unwrap();
-        let facezones = facezones::FaceZoneData::parse_and_assert(&dir_path.join("faceZones")).ok();
-        let cellzones = cellzones::CellZoneData::parse_and_assert(&dir_path.join("cellZones")).ok();
-        let pointzones =
-            pointzones::PointZoneData::parse_and_assert(&dir_path.join("pointZones")).ok();
-        let sets = sets::Sets::parse(&dir_path.join("sets")).ok();
-        PolyMesh {
-            points,
-            faces,
-            owner,
-            neighbour,
-            boundary,
-            facezones,
-            cellzones,
-            pointzones,
-            sets,
-        }
-    }
-
     pub fn write(&self, path: &path::Path) -> std::io::Result<()> {
-        self.points.write(path)?;
-        self.faces.write(path)?;
-        self.owner.write(path)?;
-        self.neighbour.write(path)?;
-        self.boundary.write(path)?;
+        self.points.write_file(path)?;
+        self.faces.write_file(path)?;
+        self.owner.write_file(path)?;
+        self.neighbour.write_file(path)?;
+        self.boundary.write_file(path)?;
         if let Some(facezones) = &self.facezones {
-            facezones.write(path)?;
+            facezones.write_file(path)?;
         }
         if let Some(cellzones) = &self.cellzones {
-            cellzones.write(path)?;
+            cellzones.write_file(path)?;
         }
         if let Some(pointzones) = &self.pointzones {
-            pointzones.write(path)?;
+            pointzones.write_file(path)?;
         }
         if let Some(sets) = &self.sets {
             sets.write(path)?;
