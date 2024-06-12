@@ -1,12 +1,13 @@
 FoamFile
 {
-    format          ascii;
-    class           vectorField;
-    location        "constant/polyMesh";
-    object          points;
+format          ascii;
+class           vectorField;
+location        "constant/polyMesh";
+object          points;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 4222
 (
 (0.353553 0.353553 -0.5)

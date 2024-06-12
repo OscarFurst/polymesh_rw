@@ -1,69 +1,70 @@
 FoamFile
 {
-    format          ascii;
-    class           polyBoundaryMesh;
-    location        "constant/polyMesh";
-    object          boundary;
+format          ascii;
+class           polyBoundaryMesh;
+location        "constant/polyMesh";
+object          boundary;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 8
 (
-inlet
+inlet           
 {
-    type            patch;
-    physicalType    patch;
-    nFaces          4;
-    startFace       980;
+type            patch;
+physicalType    patch;
+nFaces          4;
+startFace       980;
 }
-outlet
+outlet          
 {
-    type            patch;
-    physicalType    patch;
-    nFaces          4;
-    startFace       984;
+type            patch;
+physicalType    patch;
+nFaces          4;
+startFace       984;
 }
-interface
+interface       
 {
-    type            patch;
-    physicalType    patch;
-    nFaces          0;
-    startFace       988;
+type            patch;
+physicalType    patch;
+nFaces          0;
+startFace       988;
 }
-top
+top             
 {
-    type            patch;
-    physicalType    patch;
-    nFaces          36;
-    startFace       988;
+type            patch;
+physicalType    patch;
+nFaces          36;
+startFace       988;
 }
-sides
+sides           
 {
-    type            patch;
-    physicalType    patch;
-    nFaces          288;
-    startFace       1024;
+type            patch;
+physicalType    patch;
+nFaces          288;
+startFace       1024;
 }
-metal_out
+metal_out       
 {
-    type            patch;
-    physicalType    patch;
-    nFaces          20;
-    startFace       1312;
+type            patch;
+physicalType    patch;
+nFaces          20;
+startFace       1312;
 }
-metal_in
+metal_in        
 {
-    type            patch;
-    physicalType    patch;
-    nFaces          20;
-    startFace       1332;
+type            patch;
+physicalType    patch;
+nFaces          20;
+startFace       1332;
 }
-bottom
+bottom          
 {
-    type            patch;
-    physicalType    patch;
-    nFaces          36;
-    startFace       1352;
+type            patch;
+physicalType    patch;
+nFaces          36;
+startFace       1352;
 }
 )
 

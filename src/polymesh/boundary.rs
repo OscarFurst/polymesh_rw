@@ -1,12 +1,11 @@
 use crate::base::{parser_base::*, FileElement};
 use crate::base::{FileParser, FoamStructure};
-use indexmap::map::IndexMap;
-use nom::{character::complete::char, multi::count, IResult};
+use nom::{character::complete::char, IResult};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BoundaryData {
     pub n: usize,
-    pub boundaries: IndexMap<String, FoamStructure>,
+    pub boundaries: FoamStructure,
 }
 
 impl FileParser for BoundaryData {
@@ -22,11 +21,12 @@ impl FileElement for BoundaryData {
         // opening parenthesis
         let (input, _) = next(char('('))(input)?;
         // parse boundaries
-        let (input, boundary_vector) = count(FoamStructure::parse, n)(input)?;
-        let boundaries = boundary_vector
-            .into_iter()
-            .map(|boundary| (boundary.name.clone(), boundary))
-            .collect();
+        let (input, boundaries) = FoamStructure::parse(input)?;
+        assert_eq!(
+            boundaries.len(),
+            n,
+            "Number of boundaries does not match the number of boundary entries."
+        );
         // closing parenthesis
         let (input, _) = next(char(')'))(input)?;
         Ok((input, BoundaryData { n, boundaries }))
@@ -37,9 +37,7 @@ impl std::fmt::Display for BoundaryData {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         writeln!(f, "{}", self.n)?;
         writeln!(f, "(")?;
-        for boundary in self.boundaries.values() {
-            write!(f, "{}", boundary)?;
-        }
+        write!(f, "{}", self.boundaries)?;
         writeln!(f, ")")
     }
 }

@@ -1,3 +1,13 @@
+/// Writes a vector of scalar data (e.g., labels) to a file.
+/// This kind of data is stored as a list with specification of the length of the lists at the top:
+/// ```text
+/// 3
+/// (
+/// 1
+/// 2
+/// 3
+/// )
+/// ```
 pub fn write_single_data<T: std::fmt::Display>(
     data: &[T],
     file: &mut std::fmt::Formatter,

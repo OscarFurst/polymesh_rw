@@ -1,13 +1,14 @@
 FoamFile
 {
-    format          ascii;
-    class           labelList;
-    note            "nPoints:215  nCells:592  nFaces:1388  nInternalFaces:980";
-    location        "constant/polyMesh";
-    object          neighbour;
+format          ascii;
+class           labelList;
+note            "nPoints:215  nCells:592  nFaces:1388  nInternalFaces:980";
+location        "constant/polyMesh";
+object          neighbour;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 980
 (
 4

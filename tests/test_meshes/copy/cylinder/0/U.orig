@@ -1,41 +1,42 @@
 FoamFile
 {
-    format          ascii;
-    class           volVectorField;
-    object          U;
+format          ascii;
+class           volVectorField;
+object          U;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 dimensions      [0 1 -1 0 0 0 0];
 
 internalField   uniform (0 0 0);
 
-boundaryField
+boundaryField   
 {
-    down            
+down            
 {
-    type            symmetryPlane;
+type            symmetryPlane;
 }
-    right           
+right           
 {
-    type            zeroGradient;
+type            zeroGradient;
 }
-    up              
+up              
 {
-    type            symmetryPlane;
+type            symmetryPlane;
 }
-    left            
+left            
 {
-    type            uniformFixedValue;
-    uniformValue    constant (1 0 0);
+type            uniformFixedValue;
+uniformValue    constant (1 0 0);
 }
-    cylinder        
+cylinder        
 {
-    type            symmetry;
+type            symmetry;
 }
-    defaultFaces    
+defaultFaces    
 {
-    type            empty;
+type            empty;
 }
 }
 

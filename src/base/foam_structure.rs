@@ -2,14 +2,20 @@ use super::foam_value::FoamValue;
 use super::parser_base::*;
 use super::FileElement;
 use indexmap::map::IndexMap;
-use nom::character::complete::char;
 use nom::combinator::map;
-use nom::multi::fold_many0;
-use nom::sequence::{delimited, pair};
+use nom::multi::fold_many1;
+use nom::sequence::pair;
 use nom::IResult;
 
 /// A structure that holds key-value pairs.
-/// Correspons to structures commonly found in OpenFOAM files, such as the following part of a boundary file:
+/// It is effectively a HashMap with some extra I/O functionalities.
+/// Correspons to structures commonly found in OpenFOAM files, such as the following part of a uniform/time file:
+/// ```text
+/// beginTime       0;
+/// value           1282;
+/// name            "1282";
+/// ```
+/// They can also be nested, which is then indicated by brackets, as in the following part of a boundary file:
 /// ```text
 /// down
 /// {
@@ -18,74 +24,57 @@ use nom::IResult;
 ///     nFaces          0;
 ///     startFace       3890;
 /// }
+/// In this latter example, the FoamStructure would contain a key "down" with a value that is another FoamStructure.
 /// ```
 #[derive(Debug, PartialEq, Clone)]
-pub struct FoamStructure {
-    pub name: String,
-    pub content: IndexMap<String, FoamValue>,
-}
+pub struct FoamStructure(pub IndexMap<String, FoamValue>);
 
 impl FileElement for FoamStructure {
-    /// Parse a FoamStructure from the given input.
     fn parse(input: &str) -> IResult<&str, FoamStructure> {
-        let (input, name) = next(string_val)(input)?;
-        let (input, structure) = FoamStructure::parse_block(input)?;
-        Ok((
-            input,
-            FoamStructure {
-                name,
-                content: structure.content,
-            },
-        ))
+        map(Self::parse_map, FoamStructure)(input)
+    }
+}
+
+impl std::ops::Deref for FoamStructure {
+    type Target = IndexMap<String, FoamValue>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for FoamStructure {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
 impl std::fmt::Display for FoamStructure {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        writeln!(f, "{}", self.name)?;
-        writeln!(f, "{{")?;
-        self.display_content(f)?;
-        writeln!(f, "}}")
+        for (key, value) in &self.0 {
+            write!(f, "{: <15} ", key)?;
+            writeln!(f, "{}", value)?;
+        }
+        Ok(())
     }
 }
 
 impl FoamStructure {
-    pub fn parse_block(input: &str) -> IResult<&str, FoamStructure> {
-        map(
-            delimited(next(char('{')), FoamValue::parse_map, next(char('}'))),
-            |content| FoamStructure {
-                name: "".to_string(),
-                content,
+    /// Parse a single key-value pair from the given input.
+    fn parse_pair(input: &str) -> IResult<&str, (String, FoamValue)> {
+        pair(next(string_val), lws(FoamValue::parse))(input)
+    }
+
+    /// Parse multiple key-value pair from the given input and store them as IndexMap.
+    pub fn parse_map(input: &str) -> IResult<&str, IndexMap<String, FoamValue>> {
+        fold_many1(
+            FoamStructure::parse_pair,
+            IndexMap::new,
+            |mut map, (k, v)| {
+                map.insert(k, v);
+                map
             },
         )(input)
-    }
-
-    pub fn display_content(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        for (key, value) in &self.content {
-            write!(f, "    {: <15} ", key)?;
-            write!(f, "{}", value)?;
-        }
-        Ok(())
-    }
-
-    // TODO: clean up write and write_recursive
-
-    /// Write the structure to the given file, but without the name.
-    /// This is used for recursive writing of structures.
-    pub fn write_recursive(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        writeln!(f, "\n{{")?;
-        self.display_content(f)?;
-        writeln!(f, "}}")?;
-        Ok(())
-    }
-
-    pub fn relative_file_path(&self) -> Option<std::path::PathBuf> {
-        if let Some(FoamValue::String(location)) = self.content.get("location") {
-            if let Some(FoamValue::String(object)) = self.content.get("object") {
-                return Some(std::path::PathBuf::from(&location).join(object));
-            }
-        }
-        None
     }
 }
 
@@ -102,23 +91,29 @@ mod tests {
             nFaces          60;
             startFace       3890;
         }";
-        let expected = FoamStructure {
-            name: "down".to_string(),
-            content: {
-                let mut map = IndexMap::new();
-                map.insert(
-                    "type".to_string(),
-                    FoamValue::String("symmetryPlane".to_string()),
-                );
-                map.insert(
-                    "inGroups".to_string(),
-                    FoamValue::List(vec!["symmetryPlane".to_string()]),
-                );
-                map.insert("nFaces".to_string(), FoamValue::Integer(60));
-                map.insert("startFace".to_string(), FoamValue::Integer(3890));
-                map
-            },
+        let inner_map = {
+            let mut map = IndexMap::new();
+            map.insert(
+                "type".to_string(),
+                FoamValue::String("symmetryPlane".to_string()),
+            );
+            map.insert(
+                "inGroups".to_string(),
+                FoamValue::List(vec!["symmetryPlane".to_string()]),
+            );
+            map.insert("nFaces".to_string(), FoamValue::Integer(60));
+            map.insert("startFace".to_string(), FoamValue::Integer(3890));
+            map
         };
+        let outer_map = {
+            let mut map = IndexMap::new();
+            map.insert(
+                "down".to_string(),
+                FoamValue::Structure(FoamStructure(inner_map)),
+            );
+            map
+        };
+        let expected = FoamStructure(outer_map);
         let result = FoamStructure::parse(input).expect("Failed to parse structure.");
         assert_eq!(result.1, expected);
     }
@@ -138,37 +133,36 @@ mod tests {
                 type            fixedValue;
             }
         }";
-        let inner_down = FoamStructure {
-            name: "down".to_string(),
-            content: {
-                let mut map = IndexMap::new();
-                map.insert(
-                    "type".to_string(),
-                    FoamValue::String("symmetryPlane".to_string()),
-                );
-                map
-            },
-        };
-        let inner_right = FoamStructure {
-            name: "right".to_string(),
-            content: {
-                let mut map = IndexMap::new();
-                map.insert(
-                    "type".to_string(),
-                    FoamValue::String("fixedValue".to_string()),
-                );
-                map
-            },
-        };
-        let expected = FoamStructure {
-            name: "boundaryField".to_string(),
-            content: {
-                let mut map = IndexMap::new();
-                map.insert("down".to_string(), FoamValue::Structure(inner_down));
-                map.insert("right".to_string(), FoamValue::Structure(inner_right));
-                map
-            },
-        };
+        let inner_down = FoamStructure({
+            let mut map = IndexMap::new();
+            map.insert(
+                "type".to_string(),
+                FoamValue::String("symmetryPlane".to_string()),
+            );
+            map
+        });
+        let inner_right = FoamStructure({
+            let mut map = IndexMap::new();
+            map.insert(
+                "type".to_string(),
+                FoamValue::String("fixedValue".to_string()),
+            );
+            map
+        });
+        let second_layer = FoamStructure({
+            let mut map = IndexMap::new();
+            map.insert("down".to_string(), FoamValue::Structure(inner_down));
+            map.insert("right".to_string(), FoamValue::Structure(inner_right));
+            map
+        });
+        let expected = FoamStructure({
+            let mut map = IndexMap::new();
+            map.insert(
+                "boundaryField".to_string(),
+                FoamValue::Structure(second_layer),
+            );
+            map
+        });
         let result = FoamStructure::parse(input).expect("Failed to parse structure.");
         assert_eq!(result.1, expected);
     }
@@ -178,40 +172,47 @@ mod tests {
         // The "constant (1 0 0)" field was problematic at some point, and a new FoamValue will be
         // needed in the future to deal with this kind of entry.
         let input = "
-boundaryField
-{
     down
     {
         type            symmetryPlane;
+        inGroups        List<word> 1(symmetryPlane);
+        nFaces          60;
+        startFace       3890;
     }
-
     right
     {
-        type            zeroGradient;
+        type            patch;
+        nFaces          30;
+        startFace       3950;
     }
-
     up
     {
         type            symmetryPlane;
+        inGroups        List<word> 1(symmetryPlane);
+        nFaces          60;
+        startFace       3980;
     }
-
     left
     {
-        type            uniformFixedValue;
-        uniformValue    constant (1 0 0);
+        type            patch;
+        nFaces          30;
+        startFace       4040;
     }
-
     cylinder
     {
         type            symmetry;
+        inGroups        List<word> 1(symmetry);
+        nFaces          40;
+        startFace       4070;
     }
-
     defaultFaces
     {
         type            empty;
-    }
-}";
+        inGroups        List<word> 1(empty);
+        nFaces          4000;
+        startFace       4110;
+    }";
         let result = FoamStructure::parse(input).expect("Failed to parse structure.");
-        println!("{:?}", result.1);
+        println!("{}", result.1);
     }
 }

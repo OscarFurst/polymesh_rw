@@ -1,41 +1,42 @@
 FoamFile
 {
-    format          ascii;
-    class           volScalarField;
-    object          p;
+format          ascii;
+class           volScalarField;
+object          p;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 dimensions      [0 2 -2 0 0 0 0];
 
 internalField   uniform 0;
 
-boundaryField
+boundaryField   
 {
-    down            
+down            
 {
-    type            symmetryPlane;
+type            symmetryPlane;
 }
-    right           
+right           
 {
-    type            fixedValue;
-    value           uniform 0;
+type            fixedValue;
+value           uniform 0;
 }
-    up              
+up              
 {
-    type            symmetryPlane;
+type            symmetryPlane;
 }
-    left            
+left            
 {
-    type            zeroGradient;
+type            zeroGradient;
 }
-    cylinder        
+cylinder        
 {
-    type            symmetry;
+type            symmetry;
 }
-    defaultFaces    
+defaultFaces    
 {
-    type            empty;
+type            empty;
 }
 }
 

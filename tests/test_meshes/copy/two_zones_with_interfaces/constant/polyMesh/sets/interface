@@ -1,12 +1,13 @@
 FoamFile
 {
-    format          ascii;
-    class           faceSet;
-    location        "constant/polyMesh/sets";
-    object          interface;
+format          ascii;
+class           faceSet;
+location        "constant/polyMesh/sets";
+object          interface;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 36
 (
 262

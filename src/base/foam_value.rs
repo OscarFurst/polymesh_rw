@@ -3,14 +3,13 @@ use super::foam_structure::FoamStructure;
 use super::parser_base::*;
 use super::writer_base::*;
 use super::FileElement;
-use indexmap::IndexMap;
 use nom::bytes::complete::tag;
 use nom::multi::count;
-use nom::multi::fold_many0;
-use nom::sequence::pair;
+use nom::sequence::delimited;
 use nom::sequence::preceded;
 use nom::{
     bytes::complete::take_till,
+    character::complete::char,
     combinator::{map, map_res},
     sequence::terminated,
     IResult,
@@ -28,23 +27,16 @@ pub enum FoamValue {
 }
 
 impl FoamValue {
-    /// Parse a single key-value pair from the given input.
-    fn parse_pair(input: &str) -> IResult<&str, (String, FoamValue)> {
-        map(pair(next(string_val), lws(FoamValue::parse)), |(s, v)| {
-            if let FoamValue::Structure(mut structure) = v {
-                structure.name.clone_from(&s);
-                (s, FoamValue::Structure(structure))
-            } else {
-                (s, v)
-            }
-        })(input)
-    }
-
-    pub fn parse_map(input: &str) -> IResult<&str, IndexMap<String, FoamValue>> {
-        fold_many0(FoamValue::parse_pair, IndexMap::new, |mut map, (k, v)| {
-            map.insert(k, v);
-            map
-        })(input)
+    /// Parses a nested structure, e.g.:
+    /// ```text
+    /// key0 value0;
+    /// {                  // Start of nested structure
+    ///    key1 value1;
+    ///    key2 value2;
+    /// }                  // End of nested structure
+    /// ```
+    pub fn parse_structure(input: &str) -> IResult<&str, FoamStructure> {
+        delimited(next(char('{')), FoamStructure::parse, next(char('}')))(input)
     }
 }
 
@@ -79,7 +71,7 @@ impl FileElement for FoamValue {
             return Ok((input, FoamValue::List(value)));
         }
         // Check if it is a structure.
-        if let Ok((input, value)) = FoamStructure::parse_block(input) {
+        if let Ok((input, value)) = Self::parse_structure(input) {
             return Ok((input, FoamValue::Structure(value)));
         }
         // If none of the above, it is a string or something that is not implemented yet.
@@ -92,18 +84,18 @@ impl FileElement for FoamValue {
 impl std::fmt::Display for FoamValue {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            FoamValue::String(value) => writeln!(f, "{};", value)?,
-            FoamValue::Integer(value) => writeln!(f, "{};", value)?,
-            FoamValue::Float(value) => writeln!(f, "{};", value)?,
+            FoamValue::String(value) => write!(f, "{};", value)?,
+            FoamValue::Integer(value) => write!(f, "{};", value)?,
+            FoamValue::Float(value) => write!(f, "{};", value)?,
             FoamValue::Field(value) => {
-                writeln!(f, "{};", value)?;
+                write!(f, "{};", value)?;
             }
             FoamValue::List(values) => {
                 write!(f, "List<word> ")?;
                 write_single_data(values, f)?;
-                writeln!(f, ";")?
+                write!(f, ";")?
             }
-            FoamValue::Structure(value) => value.write_recursive(f)?,
+            FoamValue::Structure(value) => write!(f, "\n{{\n{}}}", value)?,
         }
         Ok(())
     }

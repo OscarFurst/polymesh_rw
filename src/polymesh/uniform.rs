@@ -1,8 +1,7 @@
-use crate::base::{parser_base::*, FileElement, FoamStructure};
-use crate::base::{FileParser, FoamValue};
-use indexmap::map::IndexMap;
+use crate::base::FileParser;
+use crate::base::{FileElement, FoamStructure};
 use nom::combinator::map;
-use nom::{character::complete::char, multi::count, IResult};
+use nom::IResult;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UniformData(pub FoamStructure);
@@ -29,17 +28,15 @@ impl FileParser for UniformData {
 
 impl FileElement for UniformData {
     fn parse(input: &str) -> IResult<&str, UniformData> {
-        map(FoamValue::parse_map, |content| {
-            UniformData(FoamStructure {
-                name: "".to_string(),
-                content,
-            })
-        })(input)
+        map(FoamStructure::parse, UniformData)(input)
     }
 }
 
 impl std::fmt::Display for UniformData {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        self.display_content(f)
+        // calling "write!(f, "{}", self)" worked in the past (because it was dereferenced correctly),
+        // but after a completely unrelated modification (implementation of "write_foam_file")
+        // it causes a stack overflow???
+        write!(f, "{}", self.0)
     }
 }

@@ -1,7 +1,4 @@
-use super::{
-    uniform::{self, UniformData},
-    FileContent, ResultData,
-};
+use super::{uniform::UniformData, FileContent, ResultData};
 use std::collections::HashMap;
 
 /// The structure that holds the full content of a time directory, which is where simulation results are stored.
@@ -52,8 +49,7 @@ impl TimeDir {
                     .to_str()
                     .expect("File name in uniform directory is not valid unicode.")
                     .to_string();
-                let mut uniform_data = FileContent::<UniformData>::parse_file(&path)?;
-                uniform_data.data.name = name.clone();
+                let uniform_data = FileContent::<UniformData>::parse_file(&path)?;
                 uniform.insert(name, uniform_data);
             }
             Some(uniform)

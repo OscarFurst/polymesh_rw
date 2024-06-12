@@ -1,12 +1,13 @@
 FoamFile
 {
-    format          ascii;
-    class           cellSet;
-    location        "constant/polyMesh/sets";
-    object          metal;
+format          ascii;
+class           cellSet;
+location        "constant/polyMesh/sets";
+object          metal;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 418
 (
 174

@@ -1,69 +1,70 @@
 FoamFile
 {
-    format          ascii;
-    class           polyBoundaryMesh;
-    location        "constant/polyMesh";
-    object          boundary;
+format          ascii;
+class           polyBoundaryMesh;
+location        "constant/polyMesh";
+object          boundary;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 6
 (
-down
+down            
 {
-    type            symmetryPlane;
-    inGroups        List<word> 1
+type            symmetryPlane;
+inGroups        List<word> 1
 (
 symmetryPlane
 )
 ;
-    nFaces          60;
-    startFace       3890;
+nFaces          60;
+startFace       3890;
 }
-right
+right           
 {
-    type            patch;
-    nFaces          30;
-    startFace       3950;
+type            patch;
+nFaces          30;
+startFace       3950;
 }
-up
+up              
 {
-    type            symmetryPlane;
-    inGroups        List<word> 1
+type            symmetryPlane;
+inGroups        List<word> 1
 (
 symmetryPlane
 )
 ;
-    nFaces          60;
-    startFace       3980;
+nFaces          60;
+startFace       3980;
 }
-left
+left            
 {
-    type            patch;
-    nFaces          30;
-    startFace       4040;
+type            patch;
+nFaces          30;
+startFace       4040;
 }
-cylinder
+cylinder        
 {
-    type            symmetry;
-    inGroups        List<word> 1
+type            symmetry;
+inGroups        List<word> 1
 (
 symmetry
 )
 ;
-    nFaces          40;
-    startFace       4070;
+nFaces          40;
+startFace       4070;
 }
-defaultFaces
+defaultFaces    
 {
-    type            empty;
-    inGroups        List<word> 1
+type            empty;
+inGroups        List<word> 1
 (
 empty
 )
 ;
-    nFaces          4000;
-    startFace       4110;
+nFaces          4000;
+startFace       4110;
 }
 )
 

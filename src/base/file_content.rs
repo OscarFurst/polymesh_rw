@@ -1,7 +1,7 @@
 use super::parser_base::discard_garbage;
 use super::FileElement;
 use super::FileParser;
-use super::FoamFileData;
+use super::FoamFile;
 use nom::IResult;
 
 use std::io::prelude::*;
@@ -15,13 +15,15 @@ use std::io::prelude::*;
 #[derive(Debug, PartialEq, Clone)]
 pub struct FileContent<T: FileParser> {
     pub location: Option<std::path::PathBuf>,
-    pub meta: FoamFileData,
+    pub meta: FoamFile,
     pub data: T,
 }
 
 impl<T: FileParser> FileElement for FileContent<T> {
     fn parse(input: &str) -> IResult<&str, Self> {
-        let (input, meta) = FoamFileData::parse(input)?;
+        // Parsing directly with FoamStructure::parse leads to a map of maps.
+        // Instead, we parse the content of the single structure FoamFile
+        let (input, meta) = FoamFile::parse(input)?;
         let (input, data) = T::parse(input)?;
         let (input, _) = discard_garbage(input)?;
         Ok((
@@ -37,10 +39,10 @@ impl<T: FileParser> FileElement for FileContent<T> {
 
 impl<T: FileParser> std::fmt::Display for FileContent<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        writeln!(f, "{}", self.meta)?;
+        write!(f, "{}", self.meta)?;
         writeln!(
             f,
-            "// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //"
+            "\n// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //\n"
         )?;
         writeln!(f, "{}", self.data)
     }

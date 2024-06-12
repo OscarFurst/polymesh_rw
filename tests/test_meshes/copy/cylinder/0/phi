@@ -1,12 +1,13 @@
 FoamFile
 {
-    format          ascii;
-    class           surfaceScalarField;
-    location        "0";
-    object          phi;
+format          ascii;
+class           surfaceScalarField;
+location        "0";
+object          phi;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 dimensions      [0 3 -1 0 0 0 0];
 
 internalField   nonuniform List<scalar>
@@ -3905,17 +3906,17 @@ internalField   nonuniform List<scalar>
 )
 ;
 
-boundaryField
+boundaryField   
 {
-    down            
+down            
 {
-    type            symmetryPlane;
-    value           uniform 0;
+type            symmetryPlane;
+value           uniform 0;
 }
-    right           
+right           
 {
-    type            calculated;
-    value           nonuniform List<scalar> 
+type            calculated;
+value           nonuniform List<scalar> 
 30
 (
 0.0663516
@@ -3951,15 +3952,15 @@ boundaryField
 )
 ;
 }
-    up              
+up              
 {
-    type            symmetryPlane;
-    value           uniform 0;
+type            symmetryPlane;
+value           uniform 0;
 }
-    left            
+left            
 {
-    type            calculated;
-    value           nonuniform List<scalar> 
+type            calculated;
+value           nonuniform List<scalar> 
 30
 (
 -0.0707107
@@ -3995,15 +3996,15 @@ boundaryField
 )
 ;
 }
-    cylinder        
+cylinder        
 {
-    type            symmetry;
-    value           uniform 0;
+type            symmetry;
+value           uniform 0;
 }
-    defaultFaces    
+defaultFaces    
 {
-    type            empty;
-    value           nonuniform List<scalar> 0();
+type            empty;
+value           nonuniform List<scalar> 0();
 }
 }
 

@@ -1,16 +1,17 @@
 FoamFile
 {
-    format          ascii;
-    class           dictionary;
-    location        "1282/uniform";
-    object          time;
+format          ascii;
+class           dictionary;
+location        "1282/uniform";
+object          time;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-    beginTime       0;
-    value           1282;
-    name            "1282";
-    index           1282;
-    deltaT          1;
-    deltaT0         1;
+
+beginTime       0;
+value           1282;
+name            "1282";
+index           1282;
+deltaT          1;
+deltaT0         1;
 

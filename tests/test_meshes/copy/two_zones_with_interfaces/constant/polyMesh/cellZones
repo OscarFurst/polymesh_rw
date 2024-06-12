@@ -1,12 +1,13 @@
 FoamFile
 {
-    format          ascii;
-    class           regIOobject;
-    location        "constant/polyMesh";
-    object          cellZones;
+format          ascii;
+class           regIOobject;
+location        "constant/polyMesh";
+object          cellZones;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 2
 (
 channel
