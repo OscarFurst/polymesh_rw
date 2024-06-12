@@ -17,7 +17,7 @@ use std::io::prelude::*;
 /// A structure that holds key-value pairs.
 /// Correspons to structures commonly found in OpenFOAM files,
 /// such as the following part of a boundary file:
-/// ```
+/// ```text
 /// down
 /// {
 ///     type            patch;
@@ -36,6 +36,17 @@ impl FoamStructure {
     /// Parse a FoamStructure from the given input.
     pub fn parse(input: &str) -> IResult<&str, FoamStructure> {
         let (input, name) = next(string_val)(input)?;
+        let (input, structure) = FoamStructure::parse_content(input)?;
+        Ok((
+            input,
+            FoamStructure {
+                name,
+                content: structure.content,
+            },
+        ))
+    }
+
+    pub fn parse_content(input: &str) -> IResult<&str, FoamStructure> {
         let (input, content) = delimited(
             next(char('{')),
             fold_many0(
@@ -48,13 +59,28 @@ impl FoamStructure {
             ),
             next(char('}')),
         )(input)?;
-        Ok((input, FoamStructure { name, content }))
+        Ok((
+            input,
+            FoamStructure {
+                name: "".to_string(),
+                content,
+            },
+        ))
     }
 
     /// Parse a single key-value pair from the given input.
     fn parse_pair(input: &str) -> IResult<&str, (String, FoamValue)> {
-        pair(next(string_val), lws(FoamValue::parse))(input)
+        map(pair(next(string_val), lws(FoamValue::parse)), |(s, v)| {
+            if let FoamValue::Structure(mut structure) = v {
+                structure.name = s.clone();
+                return (s, FoamValue::Structure(structure));
+            } else {
+                return (s, v);
+            }
+        })(input)
     }
+
+    // TODO: clean up write and write_recursive
 
     /// Write the structure to the given file.
     pub fn write(&self, file: &mut std::fs::File) -> std::io::Result<()> {
@@ -73,11 +99,22 @@ impl FoamStructure {
     fn write_recursive(&self, file: &mut std::fs::File) -> std::io::Result<()> {
         writeln!(file, "\n    {{")?;
         for (key, value) in &self.content {
-            write!(file, "    {}", key)?;
+            write!(file, "    {: <15} ", key)?;
             value.write(file)?;
         }
         writeln!(file, "    }}")?;
         Ok(())
+    }
+
+    pub fn relative_file_path(&self) -> Option<std::path::PathBuf> {
+        if let Some(FoamValue::String(location)) = self.content.get("location") {
+            if let Some(FoamValue::String(object)) = self.content.get("object") {
+                return Some(
+                    std::path::PathBuf::from(&location.to_string()).join(&object.to_string()),
+                );
+            }
+        }
+        None
     }
 }
 
@@ -106,6 +143,7 @@ impl FoamValue {
         }
         // Check if its a float.
         // TODO: Negative integers will be parsed as floats. Is this a problem?
+        // TODO: Some things that can be parsed as floats might need to be parsed as Strings, e.g. versions!
         if let Ok((input, value)) = map_res(
             terminated(ws(take_till(|c| c == ';')), semicolon),
             str::parse::<f64>,
@@ -122,11 +160,13 @@ impl FoamValue {
             return Ok((input, FoamValue::List(value)));
         }
         // Check if it is a structure.
-        if let Ok((input, value)) = FoamStructure::parse(input) {
+        if let Ok((input, value)) = FoamStructure::parse_content(input) {
             return Ok((input, FoamValue::Structure(value)));
         }
         // If none of the above, it is a string or something that is not implemented yet.
-        map(terminated(string_val, semicolon), FoamValue::String)(input)
+        map(terminated(take_till(|c| c == ';'), semicolon), |s| {
+            FoamValue::String(s.to_string())
+        })(input)
     }
 
     /// Write the value to the given file.
@@ -193,17 +233,19 @@ impl FoamField {
         match self {
             FoamField::UniformScalar(value) => writeln!(file, "uniform {};", value)?,
             FoamField::UniformVector(value) => {
-                write!(file, "uniform")?;
+                write!(file, "uniform (")?;
                 write_vector_content(&value, file)?;
-                writeln!(file, ";")?
+                writeln!(file, ");")?
             }
             FoamField::Scalar(ref values) => {
-                write!(file, "nonuniform List<scalar>")?;
-                write_single_data(values, file)?
+                writeln!(file, "nonuniform List<scalar>")?;
+                write_single_data(values, file)?;
+                writeln!(file, ";")?
             }
             FoamField::Vector(ref values) => {
-                write!(file, "nonuniform List<vector>")?;
-                write_fixed_witdh_data(values, file)?
+                writeln!(file, "nonuniform List<vector>")?;
+                write_fixed_witdh_data(values, file)?;
+                writeln!(file, ";")?
             }
         }
         Ok(())
@@ -218,15 +260,18 @@ fn parse_uniform(input: &str) -> IResult<&str, FoamField> {
                 FoamField::UniformVector(v)
             }),
         )),
-        char(';'),
+        semicolon,
     )(input)
 }
 
 fn parse_nonuniform(input: &str) -> IResult<&str, FoamField> {
     // now comes "List<scalar>" or "List<vector>"
-    preceded(
-        delimited(lws(tag("List<")), string_val, char('>')),
-        alt((scalar_field, vector_field)),
+    terminated(
+        preceded(
+            delimited(lws(tag("List<")), string_val, char('>')),
+            alt((scalar_field, vector_field)),
+        ),
+        semicolon,
     )(input)
 }
 
@@ -270,5 +315,97 @@ mod tests {
         };
         let result = FoamStructure::parse(input).expect("Failed to parse structure.");
         assert_eq!(result.1, expected);
+    }
+
+    #[test]
+    fn test_recursive_parsing() {
+        let input = "
+        boundaryField
+        {
+            down
+            {
+                type            symmetryPlane;
+            }
+            
+            right
+            {
+                type            fixedValue;
+            }
+        }";
+        let inner_down = FoamStructure {
+            name: "down".to_string(),
+            content: {
+                let mut map = IndexMap::new();
+                map.insert(
+                    "type".to_string(),
+                    FoamValue::String("symmetryPlane".to_string()),
+                );
+                map
+            },
+        };
+        let inner_right = FoamStructure {
+            name: "right".to_string(),
+            content: {
+                let mut map = IndexMap::new();
+                map.insert(
+                    "type".to_string(),
+                    FoamValue::String("fixedValue".to_string()),
+                );
+                map
+            },
+        };
+        let expected = FoamStructure {
+            name: "boundaryField".to_string(),
+            content: {
+                let mut map = IndexMap::new();
+                map.insert("down".to_string(), FoamValue::Structure(inner_down));
+                map.insert("right".to_string(), FoamValue::Structure(inner_right));
+                map
+            },
+        };
+        let result = FoamStructure::parse(input).expect("Failed to parse structure.");
+        assert_eq!(result.1, expected);
+    }
+
+    #[test]
+    fn test_recursive_with_string() {
+        // The "constant (1 0 0)" field was problematic at some point, and a new FoamValue will be
+        // needed in the future to deal with this kind of entry.
+        let input = "
+boundaryField
+{
+    down
+    {
+        type            symmetryPlane;
+    }
+
+    right
+    {
+        type            zeroGradient;
+    }
+
+    up
+    {
+        type            symmetryPlane;
+    }
+
+    left
+    {
+        type            uniformFixedValue;
+        uniformValue    constant (1 0 0);
+    }
+
+    cylinder
+    {
+        type            symmetry;
+    }
+
+    defaultFaces
+    {
+        type            empty;
+    }
+}";
+        let result = FoamStructure::parse(input).expect("Failed to parse structure.");
+        println!("{:?}", result.1);
     }
 }

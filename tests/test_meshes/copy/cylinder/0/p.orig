@@ -1,0 +1,37 @@
+FoamFile
+{
+    format          ascii;
+    class           volScalarField;
+    object          p;
+}
+dimensions      [0 2 -2 0 0 0 0];
+
+internalField   uniform 0;
+boundaryField
+{
+    down            
+    {
+    type            symmetryPlane;
+    }
+    right           
+    {
+    type            fixedValue;
+    value           uniform 0;
+    }
+    up              
+    {
+    type            symmetryPlane;
+    }
+    left            
+    {
+    type            zeroGradient;
+    }
+    cylinder        
+    {
+    type            symmetry;
+    }
+    defaultFaces    
+    {
+    type            empty;
+    }
+}

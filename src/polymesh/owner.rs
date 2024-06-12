@@ -17,7 +17,7 @@ impl FileParser for OwnerData {
         Ok((input, OwnerData { n, cells }))
     }
 
-    fn file_path(&self) -> std::path::PathBuf {
+    fn default_file_path(&self) -> std::path::PathBuf {
         std::path::PathBuf::from("constant/polyMesh/owner")
     }
 

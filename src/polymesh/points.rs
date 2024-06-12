@@ -36,7 +36,7 @@ impl FileParser for PointData {
         Ok((input, PointData { n, points }))
     }
 
-    fn file_path(&self) -> std::path::PathBuf {
+    fn default_file_path(&self) -> std::path::PathBuf {
         std::path::PathBuf::from("constant/polyMesh/points")
     }
 

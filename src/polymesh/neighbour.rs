@@ -17,7 +17,7 @@ impl FileParser for NeighbourData {
         Ok((input, NeighbourData { n, cells }))
     }
 
-    fn file_path(&self) -> std::path::PathBuf {
+    fn default_file_path(&self) -> std::path::PathBuf {
         std::path::PathBuf::from("constant/polyMesh/neighbour")
     }
 

@@ -107,7 +107,7 @@ impl FileParser for FaceZoneData {
         Ok((input, FaceZoneData { n, facezones }))
     }
 
-    fn file_path(&self) -> std::path::PathBuf {
+    fn default_file_path(&self) -> std::path::PathBuf {
         std::path::PathBuf::from("constant/polyMesh/faceZones")
     }
 

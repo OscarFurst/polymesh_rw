@@ -41,7 +41,7 @@ impl Sets {
         Ok(Self { n, sets })
     }
 
-    pub fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
+    pub fn write(&self, path: &path::Path) -> std::io::Result<()> {
         for set in self.sets.values() {
             set.write(path)?;
         }
@@ -65,7 +65,7 @@ impl FileParser for Set {
         Ok((input, Set { name, n, labels }))
     }
 
-    fn file_path(&self) -> path::PathBuf {
+    fn default_file_path(&self) -> path::PathBuf {
         path::PathBuf::from(format!("constant/polyMesh/sets/{}", self.name))
     }
 

@@ -32,7 +32,7 @@ impl FileParser for BoundaryData {
         Ok((input, BoundaryData { n, boundaries }))
     }
 
-    fn file_path(&self) -> std::path::PathBuf {
+    fn default_file_path(&self) -> std::path::PathBuf {
         std::path::PathBuf::from("constant/polyMesh/boundary")
     }
 

@@ -36,7 +36,7 @@ impl FileParser for FaceData {
         Ok((input, FaceData { n: n_faces, faces }))
     }
 
-    fn file_path(&self) -> std::path::PathBuf {
+    fn default_file_path(&self) -> std::path::PathBuf {
         std::path::PathBuf::from("constant/polyMesh/faces")
     }
 

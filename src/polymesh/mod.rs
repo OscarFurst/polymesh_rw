@@ -12,9 +12,10 @@ pub mod neighbour;
 pub mod owner;
 pub mod points;
 pub mod pointzones;
-pub mod result;
 pub mod sets;
+pub mod timedir;
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Case {
     pub poly_mesh: PolyMesh,
     pub time_directories: HashMap<String, TimeDir>,
@@ -46,7 +47,7 @@ impl Case {
     }
 
     /// Writes the case contents to the given directory.
-    pub fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
+    pub fn write(&self, path: &path::Path) -> std::io::Result<()> {
         self.poly_mesh.write(path)?;
         for (_, time_directory) in &self.time_directories {
             time_directory.write(&path)?;
@@ -57,18 +58,27 @@ impl Case {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FileContent<T: FileParser> {
+    pub location: Option<path::PathBuf>,
     pub meta: FoamFileData,
     pub data: T,
 }
 impl<T: FileParser> FileContent<T> {
     /// Write the file to the given case directory.
-    fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
-        let full_path = path.join(self.meta.relative_file_path());
+    fn write(&self, path: &path::Path) -> std::io::Result<()> {
+        let relative_path = match self.location {
+            Some(ref p) => p.to_owned(),
+            // TODO: This will have to change as soon as mets does not always contain the location.
+            None => match self.meta.relative_file_path() {
+                Some(p) => p,
+                None => self.data.default_file_path(),
+            },
+        };
+        let full_path = path.join(relative_path);
         if let Some(p) = full_path.parent() {
             std::fs::create_dir_all(p)?;
         }
         let mut file = std::fs::File::create(full_path)?;
-        self.meta.write_meta(&mut file)?;
+        self.meta.write(&mut file)?;
         self.data.write_data(&mut file)?;
         Ok(())
     }
@@ -78,7 +88,7 @@ impl<T: FileParser> FileContent<T> {
 pub struct TimeDir {
     pub time: f64,
     // Keys: variable names.
-    pub field_values: HashMap<String, FileContent<result::ResultData>>,
+    pub field_values: HashMap<String, FileContent<timedir::ResultData>>,
     // TODO : missing the "uniform" directory
 }
 
@@ -99,14 +109,14 @@ impl TimeDir {
                 .to_str()
                 .expect("File name in time directory is not valid unicode.")
                 .to_string();
-            let result_data = result::ResultData::parse(&path)?;
+            let result_data = timedir::ResultData::parse(&path)?;
             field_values.insert(name, result_data);
         }
         Ok(TimeDir { time, field_values })
     }
 
     /// path: the path to the case directory.
-    pub fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
+    pub fn write(&self, path: &path::Path) -> std::io::Result<()> {
         for (_, result) in &self.field_values {
             result.write(&path)?;
         }
@@ -177,7 +187,7 @@ impl PolyMesh {
         }
     }
 
-    pub fn write(&self, path: &path::Path) -> Result<(), Box<dyn Error>> {
+    pub fn write(&self, path: &path::Path) -> std::io::Result<()> {
         self.points.write(path)?;
         self.faces.write(path)?;
         self.owner.write(path)?;

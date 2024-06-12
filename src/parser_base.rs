@@ -1,6 +1,6 @@
 use nom::{
     branch::alt,
-    bytes::complete::{is_not, tag, take_until, take_while},
+    bytes::complete::{is_not, tag, take_until, take_while, take_while1},
     character::complete::{char, digit0, digit1, multispace0, multispace1},
     combinator::{map, map_res, value},
     multi::{count, many0, many1},
@@ -66,7 +66,7 @@ pub fn string_val(input: &str) -> IResult<&str, String> {
     map(
         alt((
             delimited(char('"'), is_not(r#"""#), char('"')),
-            take_while(|x| char::is_alphanumeric(x) || allowed_chars.contains(x)),
+            take_while1(|x| char::is_alphanumeric(x) || allowed_chars.contains(x)),
         )),
         str::to_string,
     )(input)

@@ -1,4 +1,4 @@
-use polymesh_rw::polymesh::PolyMesh;
+use polymesh_rw::polymesh::Case;
 
 #[test]
 fn test_consistency() {
@@ -10,14 +10,16 @@ fn test_consistency() {
         let path = dir.expect("Failed to read test directory.").path();
         // parse the original mesh
         println!("Parsing: {:?}", path);
-        let data = PolyMesh::parse_and_assert(&path.join("constant/polyMesh/"));
+        let data = Case::parse(&path).unwrap();
         let copy_path = base_path.join("copy/").join(path.file_name().unwrap());
         // write the parsed data to a different directory
         println!("Writing: {:?}", copy_path);
         data.write(&copy_path).expect("Failed to write data.");
         // parse the newly written, copied data
-        let copy = PolyMesh::parse_and_assert(&copy_path.join("constant/polyMesh/"));
+        let copy = Case::parse(&copy_path).unwrap();
         // compare the original and the copy
+        assert_eq!(data.poly_mesh, copy.poly_mesh);
+        assert_eq!(data.time_directories, copy.time_directories);
         assert_eq!(data, copy);
     }
 }

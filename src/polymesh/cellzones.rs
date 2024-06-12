@@ -79,7 +79,7 @@ impl FileParser for CellZoneData {
         Ok((input, CellZoneData { n, cellzones }))
     }
 
-    fn file_path(&self) -> std::path::PathBuf {
+    fn default_file_path(&self) -> std::path::PathBuf {
         std::path::PathBuf::from("constant/polyMesh/cellZones")
     }
 

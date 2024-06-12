@@ -1,0 +1,57 @@
+FoamFile
+{
+    format          ascii;
+    class           regIOobject;
+    location        "constant/polyMesh";
+    object          faceZones;
+}
+1
+(
+interface
+{
+    type faceZone;
+faceLabels      List<label>  
+36
+(
+298
+275
+273
+301
+268
+265
+278
+224
+222
+281
+242
+187
+282
+184
+181
+286
+249
+214
+288
+262
+263
+284
+217
+219
+276
+178
+239
+230
+227
+279
+280
+283
+287
+289
+285
+277
+)
+;
+flipMap         List<bool> 36{1};
+}
+
+)

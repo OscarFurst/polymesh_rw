@@ -1,12 +1,10 @@
 FoamFile
 {
-    format      ascii;
-    class       polyBoundaryMesh;
-    location    "constant/polyMesh";
-    object      boundary;
+    format          ascii;
+    class           polyBoundaryMesh;
+    location        "constant/polyMesh";
+    object          boundary;
 }
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 6
 (
 down
