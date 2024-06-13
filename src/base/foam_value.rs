@@ -15,6 +15,7 @@ use nom::{
     IResult,
 };
 
+/// An enumerator that holds the different types of values (usually paired to keys) that can be found in OpenFOAM files.
 #[derive(Debug, PartialEq, Clone)]
 pub enum FoamValue {
     String(String),
