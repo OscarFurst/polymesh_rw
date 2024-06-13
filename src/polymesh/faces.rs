@@ -4,11 +4,26 @@ use crate::base::FileElement;
 use crate::base::FileParser;
 use nom::{bytes::complete::tag, character::complete::digit1, multi::count, IResult};
 
+/// The FaceData structure holds the data of a polyMesh/faces file.
 #[derive(Debug, PartialEq, Clone)]
 pub struct FaceData {
     pub n: usize,
     // each faces ist just a list of point numbers
     pub faces: Vec<Vec<usize>>,
+}
+
+impl std::ops::Deref for FaceData {
+    type Target = Vec<Vec<usize>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.faces
+    }
+}
+
+impl std::ops::DerefMut for FaceData {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.faces
+    }
 }
 
 impl FileParser for FaceData {
@@ -42,10 +57,6 @@ impl FileElement for FaceData {
         // Return the new data structure
         Ok((input, FaceData { n: n_faces, faces }))
     }
-
-    // fn default_file_path(&self) -> std::path::PathBuf {
-    //     std::path::PathBuf::from("constant/polyMesh/faces")
-    // }
 }
 
 impl std::fmt::Display for FaceData {

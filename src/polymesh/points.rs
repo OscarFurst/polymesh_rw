@@ -7,12 +7,28 @@ use nom::{
     number::complete::double, IResult,
 };
 
+/// A point is a 3D coordinate.
 type Point = [f64; 3];
 
+/// The PointData structure holds the data of a polyMesh/points file.
 #[derive(Debug, PartialEq, Clone)]
 pub struct PointData {
     pub n: usize,
     pub points: Vec<Point>,
+}
+
+impl std::ops::Deref for PointData {
+    type Target = Vec<Point>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.points
+    }
+}
+
+impl std::ops::DerefMut for PointData {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.points
+    }
 }
 
 impl FileParser for PointData {
@@ -29,7 +45,6 @@ fn point(input: &str) -> IResult<&str, Point> {
 }
 
 impl FileElement for PointData {
-    /// Assumes the remaining input contains the point data.
     fn parse(input: &str) -> IResult<&str, PointData> {
         // Parse the number of points.
         let (input, n) = next(digit1)(input)?;
@@ -42,10 +57,6 @@ impl FileElement for PointData {
         // Return the new data structure
         Ok((input, PointData { n, points }))
     }
-
-    // fn default_file_path(&self) -> std::path::PathBuf {
-    //     std::path::PathBuf::from("constant/polyMesh/points")
-    // }
 }
 
 impl std::fmt::Display for PointData {

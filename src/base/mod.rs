@@ -8,7 +8,7 @@ mod foamfile;
 pub(crate) mod parser_base;
 pub(crate) mod writer_base;
 
-// Re-export the modules for easier access.
+// Re-export the data structures.
 pub use file_content::FileContent;
 pub use file_parser::FileElement;
 pub use file_parser::FileParser;

@@ -11,6 +11,7 @@ use nom::{
 };
 use std::ops::Deref;
 
+/// The ResultData structure holds the data of a time directory file, e.g., "0/phi".
 #[derive(Debug, PartialEq, Clone)]
 pub struct ResultData {
     pub n: usize,

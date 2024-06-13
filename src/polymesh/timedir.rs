@@ -1,4 +1,4 @@
-use super::{uniform::UniformData, FileContent, ResultData};
+use super::{FileContent, ResultData, UniformData};
 use std::collections::HashMap;
 
 /// The structure that holds the full content of a time directory, which is where simulation results are stored.

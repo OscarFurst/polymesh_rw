@@ -1,4 +1,4 @@
-use super::facezones::Zone;
+use super::Zone;
 use crate::base::parser_base::*;
 use crate::base::writer_base::*;
 use crate::base::FileElement;
@@ -11,6 +11,20 @@ pub struct CellZone {
     pub name: String,
     pub n: usize,
     pub cells: Vec<usize>,
+}
+
+impl std::ops::Deref for CellZone {
+    type Target = Vec<usize>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.cells
+    }
+}
+
+impl std::ops::DerefMut for CellZone {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.cells
+    }
 }
 
 impl Zone for CellZone {

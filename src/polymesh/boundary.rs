@@ -2,10 +2,25 @@ use crate::base::{parser_base::*, FileElement};
 use crate::base::{FileParser, FoamStructure};
 use nom::{character::complete::char, IResult};
 
+/// The BoundaryData structure holds the data of a polyMesh/boundary file.
 #[derive(Debug, PartialEq, Clone)]
 pub struct BoundaryData {
     pub n: usize,
     pub boundaries: FoamStructure,
+}
+
+impl std::ops::Deref for BoundaryData {
+    type Target = FoamStructure;
+
+    fn deref(&self) -> &Self::Target {
+        &self.boundaries
+    }
+}
+
+impl std::ops::DerefMut for BoundaryData {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.boundaries
+    }
 }
 
 impl FileParser for BoundaryData {

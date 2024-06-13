@@ -1,32 +1,36 @@
 use crate::base::FileContent;
 use std::path;
 
-pub mod boundary;
-pub mod cellzones;
-pub mod faces;
-pub mod facezones;
-pub mod neighbour;
-pub mod owner;
-pub mod points;
-pub mod pointzones;
-pub mod result;
-pub mod sets;
-pub mod timedir;
-pub mod uniform;
+mod boundary;
+mod cellzones;
+mod faces;
+mod facezones;
+mod neighbour;
+mod owner;
+mod points;
+mod pointzones;
+mod result;
+mod sets;
+mod timedir;
+mod uniform;
+mod zones;
 
-// re-export the structures for easier access.
+// re-exports
 pub use boundary::BoundaryData;
 pub use cellzones::CellZone;
 pub use faces::FaceData;
 pub use facezones::FaceZone;
-pub use facezones::ZoneData;
 pub use neighbour::NeighbourData;
 pub use owner::OwnerData;
 pub use points::PointData;
 pub use pointzones::PointZone;
 pub use result::ResultData;
+pub use sets::Set;
 pub use sets::Sets;
 pub use timedir::TimeDir;
+pub use uniform::UniformData;
+pub use zones::Zone;
+pub use zones::ZoneData;
 
 /// The PolyMesh structure holds all the data of a polyMesh directory.
 #[derive(Debug, PartialEq, Clone)]
@@ -39,7 +43,7 @@ pub struct PolyMesh {
     pub facezones: Option<FileContent<ZoneData<FaceZone>>>,
     pub cellzones: Option<FileContent<ZoneData<CellZone>>>,
     pub pointzones: Option<FileContent<ZoneData<PointZone>>>,
-    pub sets: Option<sets::Sets>,
+    pub sets: Option<Sets>,
 }
 
 impl PolyMesh {

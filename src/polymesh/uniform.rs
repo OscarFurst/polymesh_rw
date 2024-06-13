@@ -3,6 +3,7 @@ use crate::base::{FileElement, FoamStructure};
 use nom::combinator::map;
 use nom::IResult;
 
+/// The UniformData structure holds the data of a polyMesh/uniform file.
 #[derive(Debug, PartialEq, Clone)]
 pub struct UniformData(pub FoamStructure);
 

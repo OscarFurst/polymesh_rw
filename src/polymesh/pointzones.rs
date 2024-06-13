@@ -1,16 +1,30 @@
+use super::Zone;
 use crate::base::parser_base::*;
 use crate::base::writer_base::*;
 use crate::base::FileElement;
 use nom::{character::complete::char, IResult};
 
-use super::facezones::Zone;
-
+/// The PointZone structure containts the data of a single pointZone.
 #[derive(Debug, PartialEq, Clone)]
 pub struct PointZone {
     // starts with a "type" which I have only seen as "pointZone", so I'm not storing it for now
     pub name: String,
     pub n: usize,
     pub points: Vec<usize>,
+}
+
+impl std::ops::Deref for PointZone {
+    type Target = Vec<usize>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.points
+    }
+}
+
+impl std::ops::DerefMut for PointZone {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.points
+    }
 }
 
 impl Zone for PointZone {

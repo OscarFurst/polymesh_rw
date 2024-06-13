@@ -12,7 +12,7 @@ Curretly, following features are implemented:
 - [x] Read results
 - [x] Write results
 - [ ] Practical constructors for each file type.
-- [ ] Parse most common OpenFoam data types (currently parsed as Strings.)
+- [ ] Parse more common OpenFoam data types (unrecognized types are currently parsed as Strings.)
 - [ ] Binary file formats
 - [ ] Data consistency checks
 

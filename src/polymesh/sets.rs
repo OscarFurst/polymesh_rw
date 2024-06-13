@@ -8,11 +8,25 @@ use std::collections::HashMap;
 use std::fs;
 use std::path;
 
-/// The Sets structure holds the full content of the "sets" directory.
+/// The Sets structure holds the full content of the "constant/polyMesh/sets" directory.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Sets {
     pub n: usize,
     pub sets: HashMap<String, FileContent<Set>>,
+}
+
+impl std::ops::Deref for Sets {
+    type Target = HashMap<String, FileContent<Set>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.sets
+    }
+}
+
+impl std::ops::DerefMut for Sets {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.sets
+    }
 }
 
 impl Sets {
@@ -56,11 +70,26 @@ impl Sets {
     }
 }
 
+/// The Set structure containts the data of a single set file found in the "constant/polyMesh/sets/" directory.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Set {
     pub name: String,
     pub n: usize,
     pub labels: Vec<usize>,
+}
+
+impl std::ops::Deref for Set {
+    type Target = Vec<usize>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.labels
+    }
+}
+
+impl std::ops::DerefMut for Set {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.labels
+    }
 }
 
 impl FileParser for Set {

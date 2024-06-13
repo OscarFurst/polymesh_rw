@@ -12,7 +12,7 @@ object          boundary;
 (
 down            
 {
-type            symmetryPlane;
+type            fixedValue;
 inGroups        List<word> 1
 (
 symmetryPlane
