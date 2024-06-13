@@ -2,6 +2,12 @@
 name = "polymesh_rw"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+keywords = ["CFD", "simulation", "OpenFOAM", "mesh"]
+categories = ["simulation", "science", "aerospace::simulation"]
+repository = "https://github.com/OscarFurst/polymesh_rw"
+readme = "readme.md"
+description = "A basic rust crate for reading and writing meshes and simulation data in the polymesh format used by OpenFOAM."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

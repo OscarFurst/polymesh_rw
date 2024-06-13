@@ -37,7 +37,7 @@ impl TimeDir {
         // check if there is a uniform directory
         let uniform = if path.join("uniform").is_dir() {
             let mut uniform = HashMap::new();
-            for entry in std::fs::read_dir(&path.join("uniform"))? {
+            for entry in std::fs::read_dir(path.join("uniform"))? {
                 let entry = entry?;
                 let path = entry.path();
                 if path.is_dir() {
