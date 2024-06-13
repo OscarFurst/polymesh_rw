@@ -9,7 +9,6 @@ use nom::{character::complete::char, IResult};
 pub struct PointZone {
     // starts with a "type" which I have only seen as "pointZone", so I'm not storing it for now
     pub name: String,
-    pub n: usize,
     pub points: Vec<usize>,
 }
 
@@ -50,12 +49,11 @@ impl FileElement for PointZone {
         let (input, _) = known_key_value("pointLabels", "List<label>")(input)?;
         // list of points
         let (input, points) = single_i_data(input)?;
-        let n = points.len();
         // closing semicolon
         let (input, _) = next(semicolon)(input)?;
         // closing curly brace
         let (input, _) = next(char('}'))(input)?;
-        Ok((input, PointZone { name, n, points }))
+        Ok((input, PointZone { name, points }))
     }
 }
 

@@ -9,7 +9,6 @@ use nom::{bytes::complete::tag, character::complete::char, sequence::delimited, 
 pub struct FaceZone {
     // starts with a "type" which I have only seen as "faceZone", so I'm not storing it for now
     pub name: String,
-    pub n: usize,
     pub faces: Vec<usize>,
     // no idea what flipmap is does and what forms it can take, only seen one example so far
     // maybe even useless : https://gitlab.kitware.com/vtk/vtk/-/issues/17103
@@ -66,7 +65,6 @@ impl FileElement for FaceZone {
             input,
             FaceZone {
                 name,
-                n,
                 faces,
                 flipmap,
             },
@@ -91,7 +89,7 @@ impl std::fmt::Display for FaceZone {
 impl FaceZone {
     fn write_flipmap(&self, file: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(file, "flipMap         List<bool> ")?;
-        write!(file, "{}", self.n)?;
+        write!(file, "{}", self.faces.len())?;
         write!(file, "{{")?;
         write!(file, "{}", bool_as_num(self.flipmap))?;
         writeln!(file, "}};")?;

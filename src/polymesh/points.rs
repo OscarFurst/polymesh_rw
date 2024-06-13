@@ -12,22 +12,19 @@ type Point = [f64; 3];
 
 /// The PointData structure holds the data of a polyMesh/points file.
 #[derive(Debug, PartialEq, Clone)]
-pub struct PointData {
-    pub n: usize,
-    pub points: Vec<Point>,
-}
+pub struct PointData(pub Vec<Point>);
 
 impl std::ops::Deref for PointData {
     type Target = Vec<Point>;
 
     fn deref(&self) -> &Self::Target {
-        &self.points
+        &self.0
     }
 }
 
 impl std::ops::DerefMut for PointData {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.points
+        &mut self.0
     }
 }
 
@@ -55,13 +52,13 @@ impl FileElement for PointData {
         // If the number of points was accurate this schould work:
         let (input, _) = next(tag(")"))(input)?;
         // Return the new data structure
-        Ok((input, PointData { n, points }))
+        Ok((input, PointData(points)))
     }
 }
 
 impl std::fmt::Display for PointData {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write_fixed_witdh_data(&self.points, f)
+        write_fixed_witdh_data(&self.0, f)
     }
 }
 
@@ -78,15 +75,12 @@ mod tests {
 (0 1 1)
 (0 1 0)
 )";
-        let expected_value = PointData {
-            n: 4,
-            points: vec![
-                [0.0, 0.0, 1.0],
-                [0.0, 0.0, 0.0],
-                [0.0, 1.0, 1.0],
-                [0.0, 1.0, 0.0],
-            ],
-        };
+        let expected_value = PointData(vec![
+            [0.0, 0.0, 1.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 1.0, 1.0],
+            [0.0, 1.0, 0.0],
+        ]);
         let (_, actual_value) = PointData::parse(input).unwrap();
         assert_eq!(expected_value, actual_value);
     }

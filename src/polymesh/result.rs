@@ -14,7 +14,6 @@ use std::ops::Deref;
 /// The ResultData structure holds the data of a time directory file, e.g., "0/phi".
 #[derive(Debug, PartialEq, Clone)]
 pub struct ResultData {
-    pub n: usize,
     pub dimensions: Dimensions,
     pub result: FoamField,
     pub boundary_field: Option<FoamStructure>,
@@ -33,11 +32,6 @@ impl FileElement for ResultData {
         let (input, dimensions) = Dimensions::parse(input)?;
         // Parse the field data.
         let (input, result) = preceded(next(tag("internalField")), FoamField::parse)(input)?;
-        let n = match &result {
-            FoamField::Scalar(values) => values.len(),
-            FoamField::Vector(values) => values.len(),
-            _ => 1,
-        };
         // Parse the boundary field which is sometimes present (in initial conditions for example).
         let (input, boundary_field) = opt(FoamStructure::parse)(input)?;
         // let boundary_field = Some(boundary_field);
@@ -45,7 +39,6 @@ impl FileElement for ResultData {
         Ok((
             input,
             ResultData {
-                n,
                 dimensions,
                 result,
                 boundary_field,
@@ -126,7 +119,6 @@ internalField   nonuniform List<scalar>
 ;
 ";
         let expected_value = ResultData {
-            n: 4,
             dimensions: Dimensions([0, 2, -2, 0, 0, 0, 0]),
             result: FoamField::Scalar(vec![685.183, 685.183, 685.184, 685.184]),
             boundary_field: None,
@@ -150,7 +142,6 @@ internalField   nonuniform List<vector>
 )
 ;";
         let expected_value = ResultData {
-            n: 4,
             dimensions: Dimensions([0, 1, -1, 0, 0, 0, 0]),
             result: FoamField::Vector(vec![
                 vec![-8.52809e-05, 0.00019428, 0.00777701],

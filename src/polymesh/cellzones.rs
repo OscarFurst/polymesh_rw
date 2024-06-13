@@ -9,7 +9,6 @@ use nom::{character::complete::char, IResult};
 pub struct CellZone {
     // starts with a "type" which I have only seen as "cellZone", so I'm not storing it for now
     pub name: String,
-    pub n: usize,
     pub cells: Vec<usize>,
 }
 
@@ -50,12 +49,11 @@ impl FileElement for CellZone {
         let (input, _) = next(known_key_value("cellLabels", "List<label>"))(input)?;
         // list of cells
         let (input, cells) = single_i_data(input)?;
-        let n = cells.len();
         // closing semicolon
         let (input, _) = next(semicolon)(input)?;
         // closing curly brace
         let (input, _) = next(char('}'))(input)?;
-        Ok((input, CellZone { name, n, cells }))
+        Ok((input, CellZone { name, cells }))
     }
 }
 

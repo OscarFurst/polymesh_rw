@@ -6,23 +6,22 @@ use nom::{bytes::complete::tag, character::complete::digit1, multi::count, IResu
 
 /// The FaceData structure holds the data of a polyMesh/faces file.
 #[derive(Debug, PartialEq, Clone)]
-pub struct FaceData {
-    pub n: usize,
+pub struct FaceData(
     // each faces ist just a list of point numbers
-    pub faces: Vec<Vec<usize>>,
-}
+    pub Vec<Vec<usize>>,
+);
 
 impl std::ops::Deref for FaceData {
     type Target = Vec<Vec<usize>>;
 
     fn deref(&self) -> &Self::Target {
-        &self.faces
+        &self.0
     }
 }
 
 impl std::ops::DerefMut for FaceData {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.faces
+        &mut self.0
     }
 }
 
@@ -55,13 +54,13 @@ impl FileElement for FaceData {
         // If the number of faces was accurate this schould work:
         let (input, _) = next(tag(")"))(input)?;
         // Return the new data structure
-        Ok((input, FaceData { n: n_faces, faces }))
+        Ok((input, FaceData(faces)))
     }
 }
 
 impl std::fmt::Display for FaceData {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write_multi_data(&self.faces, f)
+        write_multi_data(&self.0, f)
     }
 }
 
@@ -78,15 +77,12 @@ mod tests {
 3(42 84 113)
 3(42 113 92)
 )";
-        let expected_value = FaceData {
-            n: 4,
-            faces: vec![
-                vec![42, 92, 84],
-                vec![113, 84, 92],
-                vec![42, 84, 113],
-                vec![42, 113, 92],
-            ],
-        };
+        let expected_value = FaceData(vec![
+            vec![42, 92, 84],
+            vec![113, 84, 92],
+            vec![42, 84, 113],
+            vec![42, 113, 92],
+        ]);
         let (_, actual_value) = FaceData::parse(input).unwrap();
         assert_eq!(expected_value, actual_value);
     }

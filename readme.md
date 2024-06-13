@@ -11,7 +11,6 @@ Curretly, following features are implemented:
 - [x] Write mesh
 - [x] Read results
 - [x] Write results
-- [ ] Practical constructors for each file type.
 - [ ] Parse more common OpenFoam data types (unrecognized types are currently parsed as Strings.)
 - [ ] Binary file formats
 - [ ] Data consistency checks

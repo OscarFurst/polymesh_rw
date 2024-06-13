@@ -10,22 +10,19 @@ use std::path;
 
 /// The Sets structure holds the full content of the "constant/polyMesh/sets" directory.
 #[derive(Debug, PartialEq, Clone)]
-pub struct Sets {
-    pub n: usize,
-    pub sets: HashMap<String, FileContent<Set>>,
-}
+pub struct Sets(pub HashMap<String, FileContent<Set>>);
 
 impl std::ops::Deref for Sets {
     type Target = HashMap<String, FileContent<Set>>;
 
     fn deref(&self) -> &Self::Target {
-        &self.sets
+        &self.0
     }
 }
 
 impl std::ops::DerefMut for Sets {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.sets
+        &mut self.0
     }
 }
 
@@ -52,13 +49,12 @@ impl Sets {
             set.data.name = name.to_string();
             sets.insert(name.to_string(), set);
         }
-        let n = sets.len();
-        Ok(Self { n, sets })
+        Ok(Self(sets))
     }
 
     /// Writes the complete "sets" directory to the provided path.
     pub fn write(&self, path: &path::Path) -> std::io::Result<()> {
-        for set in self.sets.values() {
+        for set in self.values() {
             set.write_file(path)?;
         }
         Ok(())

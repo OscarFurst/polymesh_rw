@@ -6,22 +6,19 @@ use nom::IResult;
 
 /// The NeighbourData structure holds the data of a polyMesh/neighbour file.
 #[derive(Debug, PartialEq, Clone)]
-pub struct NeighbourData {
-    pub n: usize,
-    pub cells: Vec<usize>,
-}
+pub struct NeighbourData(pub Vec<usize>);
 
 impl std::ops::Deref for NeighbourData {
     type Target = Vec<usize>;
 
     fn deref(&self) -> &Self::Target {
-        &self.cells
+        &self.0
     }
 }
 
 impl std::ops::DerefMut for NeighbourData {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.cells
+        &mut self.0
     }
 }
 
@@ -34,13 +31,12 @@ impl FileParser for NeighbourData {
 impl FileElement for NeighbourData {
     fn parse(input: &str) -> IResult<&str, NeighbourData> {
         let (input, cells) = single_i_data(input)?;
-        let n = cells.len();
-        Ok((input, NeighbourData { n, cells }))
+        Ok((input, NeighbourData(cells)))
     }
 }
 
 impl std::fmt::Display for NeighbourData {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write_single_data(&self.cells, f)
+        write_single_data(&self.0, f)
     }
 }
