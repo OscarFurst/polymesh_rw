@@ -4,30 +4,30 @@
 //! ```
 //! use polymesh_rw::*;
 //!# fn main() -> std::io::Result<()> {
-//!   let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
-//!   let mut case = Case::parse_file(case_file_path)?;
-//!#    let boundary = &mut case.polymesh.boundary;
-//!#    
-//!#    let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
-//!#    let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
-//!#    assert_eq!(*boundary, boundary_2);
-//!#    
-//!#    println!("{}", boundary);
-//!#    
-//!#    let FoamValue::Structure(ref mut down_bc) = boundary
-//!#        .data
-//!#        .get_mut("down")
-//!#        .expect("\"down\" boundary condition not found.")
-//!#    else {
-//!#        panic!("\"down\" boundary condition is not a structure.");
-//!#    };
-//!#    println!("{}", down_bc);
-//!#    *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
-//!#    println!("{}", down_bc);
-//!#    
-//!#    let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
-//!#    case.write_file(modified_case_file_path)?;
-//!#    Ok(())
+//! let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
+//! let mut case = Case::parse_file(case_file_path)?;
+//!# let boundary = &mut case.polymesh.boundary;
+//!#
+//!# let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
+//!# let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
+//!# assert_eq!(*boundary, boundary_2);
+//!#
+//!# println!("{}", boundary);
+//!#
+//!# let FoamValue::Structure(ref mut down_bc) = boundary
+//!#     .data
+//!#     .get_mut("down")
+//!#     .expect("\"down\" boundary condition not found.")
+//!# else {
+//!#     panic!("\"down\" boundary condition is not a structure.");
+//!# };
+//!# println!("{}", down_bc);
+//!# *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
+//!# println!("{}", down_bc);
+//!#
+//!# let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
+//!# case.write_file(modified_case_file_path)?;
+//!# Ok(())
 //!# }
 //! ```
 //! The data in a case struct is separated in a ```polymesh``` structure which stores the mesh, and a ```time_directories```
@@ -36,30 +36,30 @@
 //! ```
 //!# use polymesh_rw::*;
 //!# fn main() -> std::io::Result<()> {
-//!#   let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
-//!#   let mut case = Case::parse_file(case_file_path)?;
-//!   let boundary = &mut case.polymesh.boundary;
-//!#   
-//!#   let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
-//!#   let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
-//!#   assert_eq!(*boundary, boundary_2);
-//!#   
-//!#   println!("{}", boundary);
-//!#   
-//!#   let FoamValue::Structure(ref mut down_bc) = boundary
-//!#       .data
-//!#       .get_mut("down")
-//!#       .expect("\"down\" boundary condition not found.")
-//!#   else {
-//!#       panic!("\"down\" boundary condition is not a structure.");
-//!#   };
-//!#   println!("{}", down_bc);
-//!#   *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
-//!#   println!("{}", down_bc);
-//!#   
-//!#   let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
-//!#   case.write_file(modified_case_file_path)?;
-//!#   Ok(())
+//!# let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
+//!# let mut case = Case::parse_file(case_file_path)?;
+//! let boundary = &mut case.polymesh.boundary;
+//!#
+//!# let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
+//!# let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
+//!# assert_eq!(*boundary, boundary_2);
+//!#
+//!# println!("{}", boundary);
+//!#
+//!# let FoamValue::Structure(ref mut down_bc) = boundary
+//!#     .data
+//!#     .get_mut("down")
+//!#     .expect("\"down\" boundary condition not found.")
+//!# else {
+//!#     panic!("\"down\" boundary condition is not a structure.");
+//!# };
+//!# println!("{}", down_bc);
+//!# *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
+//!# println!("{}", down_bc);
+//!#
+//!# let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
+//!# case.write_file(modified_case_file_path)?;
+//!# Ok(())
 //!# }
 //!```
 //!Data files are stored in ```FileContent``` structs, which contain the metadata (header) and data of the file.
@@ -67,60 +67,60 @@
 //!```
 //!# use polymesh_rw::*;
 //!# fn main() -> std::io::Result<()> {
-//!#   let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
-//!#   let mut case = Case::parse_file(case_file_path)?;
-//!#   let boundary = &mut case.polymesh.boundary;
-//!#   
-//!   let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
-//!   let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
-//!   assert_eq!(*boundary, boundary_2);
-//!#   
-//!#   println!("{}", boundary);
-//!#   
-//!#   let FoamValue::Structure(ref mut down_bc) = boundary
-//!#       .data
-//!#       .get_mut("down")
-//!#       .expect("\"down\" boundary condition not found.")
-//!#   else {
-//!#       panic!("\"down\" boundary condition is not a structure.");
-//!#   };
-//!#   println!("{}", down_bc);
-//!#   *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
-//!#   println!("{}", down_bc);
-//!#   
-//!#   let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
-//!#   case.write_file(modified_case_file_path)?;
-//!#   Ok(())
+//!# let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
+//!# let mut case = Case::parse_file(case_file_path)?;
+//!# let boundary = &mut case.polymesh.boundary;
+//!#
+//! let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
+//! let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
+//! assert_eq!(*boundary, boundary_2);
+//!#
+//!# println!("{}", boundary);
+//!#
+//!# let FoamValue::Structure(ref mut down_bc) = boundary
+//!#     .data
+//!#     .get_mut("down")
+//!#     .expect("\"down\" boundary condition not found.")
+//!# else {
+//!#     panic!("\"down\" boundary condition is not a structure.");
+//!# };
+//!# println!("{}", down_bc);
+//!# *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
+//!# println!("{}", down_bc);
+//!#
+//!# let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
+//!# case.write_file(modified_case_file_path)?;
+//!# Ok(())
 //!# }
 //!```
 //!All the data and metadata containers implement ```std::fmt::Debug```, so they can be printed to the console.
 //!```
 //!# use polymesh_rw::*;
 //!# fn main() -> std::io::Result<()> {
-//!#   let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
-//!#   let mut case = Case::parse_file(case_file_path)?;
-//!#   let boundary = &mut case.polymesh.boundary;
-//!#   
-//!#   let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
-//!#   let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
-//!#   assert_eq!(*boundary, boundary_2);
-//!#   
-//!   println!("{}", boundary);
-//!#   
-//!#   let FoamValue::Structure(ref mut down_bc) = boundary
-//!#       .data
-//!#       .get_mut("down")
-//!#       .expect("\"down\" boundary condition not found.")
-//!#   else {
-//!#       panic!("\"down\" boundary condition is not a structure.");
-//!#   };
-//!#   println!("{}", down_bc);
-//!#   *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
-//!#   println!("{}", down_bc);
-//!#   
-//!#   let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
-//!#   case.write_file(modified_case_file_path)?;
-//!#   Ok(())
+//!# let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
+//!# let mut case = Case::parse_file(case_file_path)?;
+//!# let boundary = &mut case.polymesh.boundary;
+//!#
+//!# let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
+//!# let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
+//!# assert_eq!(*boundary, boundary_2);
+//!#
+//! println!("{}", boundary);
+//!#
+//!# let FoamValue::Structure(ref mut down_bc) = boundary
+//!#     .data
+//!#     .get_mut("down")
+//!#     .expect("\"down\" boundary condition not found.")
+//!# else {
+//!#     panic!("\"down\" boundary condition is not a structure.");
+//!# };
+//!# println!("{}", down_bc);
+//!# *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
+//!# println!("{}", down_bc);
+//!#
+//!# let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
+//!# case.write_file(modified_case_file_path)?;
+//!# Ok(())
 //!# }
 //! ```
 //! The underlying data is stored in two different ways: either as HashMaps or a Vectors. The wrappers around these
@@ -134,30 +134,30 @@
 //! ```
 //!# use polymesh_rw::*;
 //!# fn main() -> std::io::Result<()> {
-//!#   let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
-//!#   let mut case = Case::parse_file(case_file_path)?;
-//!#   let boundary = &mut case.polymesh.boundary;
-//!#   
-//!#   let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
-//!#   let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
-//!#   assert_eq!(*boundary, boundary_2);
-//!#   
-//!#   println!("{}", boundary);
-//!#   
-//!   let FoamValue::Structure(ref mut down_bc) = boundary
-//!       .data
-//!       .get_mut("down")
-//!       .expect("\"down\" boundary condition not found.")
-//!   else {
-//!       panic!("\"down\" boundary condition is not a structure.");
-//!   };
-//!   println!("{}", down_bc);
-//!   *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
-//!   println!("{}", down_bc);
-//!#   
-//!#   let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
-//!#   case.write_file(modified_case_file_path)?;
-//!#   Ok(())
+//!# let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
+//!# let mut case = Case::parse_file(case_file_path)?;
+//!# let boundary = &mut case.polymesh.boundary;
+//!#
+//!# let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
+//!# let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
+//!# assert_eq!(*boundary, boundary_2);
+//!#
+//!# println!("{}", boundary);
+//!#
+//! let FoamValue::Structure(ref mut down_bc) = boundary
+//!     .data
+//!     .get_mut("down")
+//!     .expect("\"down\" boundary condition not found.")
+//! else {
+//!     panic!("\"down\" boundary condition is not a structure.");
+//! };
+//! println!("{}", down_bc);
+//! *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
+//! println!("{}", down_bc);
+//!#
+//!# let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
+//!# case.write_file(modified_case_file_path)?;
+//!# Ok(())
 //!# }
 //!```
 //!Files can be written using the ```write_file``` method, which writes the data to the provided path.
@@ -165,60 +165,60 @@
 //!```
 //!# use polymesh_rw::*;
 //!# fn main() -> std::io::Result<()> {
-//!#   let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
-//!#   let mut case = Case::parse_file(case_file_path)?;
-//!#   let boundary = &mut case.polymesh.boundary;
-//!#   
-//!#   let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
-//!#   let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
-//!#   assert_eq!(*boundary, boundary_2);
-//!#   
-//!#   println!("{}", boundary);
-//!#   
-//!#   let FoamValue::Structure(ref mut down_bc) = boundary
-//!#       .data
-//!#       .get_mut("down")
-//!#       .expect("\"down\" boundary condition not found.")
-//!#   else {
-//!#       panic!("\"down\" boundary condition is not a structure.");
-//!#   };
-//!#   println!("{}", down_bc);
-//!#   *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
-//!#   println!("{}", down_bc);
-//!#   
-//!   let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
-//!   case.write_file(modified_case_file_path)?;
-//!#   Ok(())
+//!# let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
+//!# let mut case = Case::parse_file(case_file_path)?;
+//!# let boundary = &mut case.polymesh.boundary;
+//!#
+//!# let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
+//!# let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
+//!# assert_eq!(*boundary, boundary_2);
+//!#
+//!# println!("{}", boundary);
+//!#
+//!# let FoamValue::Structure(ref mut down_bc) = boundary
+//!#     .data
+//!#     .get_mut("down")
+//!#     .expect("\"down\" boundary condition not found.")
+//!# else {
+//!#     panic!("\"down\" boundary condition is not a structure.");
+//!# };
+//!# println!("{}", down_bc);
+//!# *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
+//!# println!("{}", down_bc);
+//!#
+//! let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
+//! case.write_file(modified_case_file_path)?;
+//!# Ok(())
 //!# }
 //! ```
 //! We can also choose to write only the ```boundary``` file, which is a part of the full case.
 //!```
 //!# use polymesh_rw::*;
 //!# fn main() -> std::io::Result<()> {
-//!#   let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
-//!#   let mut case = Case::parse_file(case_file_path)?;
-//!#   let boundary = &mut case.polymesh.boundary;
-//!#   
-//!#   let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
-//!#   let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
-//!#   assert_eq!(*boundary, boundary_2);
-//!#   
-//!#   println!("{}", boundary);
-//!#   
-//!#   let FoamValue::Structure(ref mut down_bc) = boundary
-//!#       .data
-//!#       .get_mut("down")
-//!#       .expect("\"down\" boundary condition not found.")
-//!#   else {
-//!#       panic!("\"down\" boundary condition is not a structure.");
-//!#   };
-//!#   println!("{}", down_bc);
-//!#   *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
-//!#   println!("{}", down_bc);
-//!#   
-//!   let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
-//!    boundary.write_file(modified_case_file_path)?;
-//!#   Ok(())
+//!# let case_file_path = std::path::Path::new("tests/test_cases/original/cylinder");
+//!# let mut case = Case::parse_file(case_file_path)?;
+//!# let boundary = &mut case.polymesh.boundary;
+//!#
+//!# let boundary_file_path = &case_file_path.join("constant/polyMesh/boundary");
+//!# let boundary_2 = FileContent::<BoundaryData>::parse_file(&boundary_file_path)?;
+//!# assert_eq!(*boundary, boundary_2);
+//!#
+//!# println!("{}", boundary);
+//!#
+//!# let FoamValue::Structure(ref mut down_bc) = boundary
+//!#     .data
+//!#     .get_mut("down")
+//!#     .expect("\"down\" boundary condition not found.")
+//!# else {
+//!#     panic!("\"down\" boundary condition is not a structure.");
+//!# };
+//!# println!("{}", down_bc);
+//!# *down_bc.get_mut("type").unwrap() = FoamValue::String("fixedValue".to_string());
+//!# println!("{}", down_bc);
+//!#
+//! let modified_case_file_path = std::path::Path::new("tests/test_cases/copy/cylinder");
+//! boundary.write_file(modified_case_file_path)?;
+//!# Ok(())
 //!# }
 //!```
 //! We still provide the path to the case directory, but the file will be written to the correct location inside the
