@@ -1,2 +1,2 @@
 # Exclude OpenFOAM files from language detection
-tests/test_cases/* linguist-vendored
+tests/test_cases/** linguist-vendored
